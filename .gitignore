@@ -1,5 +1,21 @@
-target
-.sonar
-#sqlite databases
-*.db 
+# Maven
+target/
 
+# Eclipse
+.project
+.classpath
+.settings/
+
+#Test
+.sonar
+
+# Logs
+*.log
+
+# Temp Files
+*.tmp
+*.bak
+
+# Eclipse APT
+.apt_generated/
+.apt_generated_test/
