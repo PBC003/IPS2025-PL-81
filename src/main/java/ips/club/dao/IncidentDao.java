@@ -5,16 +5,19 @@ import ips.util.ApplicationException;
 import ips.util.Database;
 
 import java.sql.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IncidentDao {
 
     private static final String SQL_INSERT = "INSERT INTO incident (user_id, inc_code, description, created_at) VALUES (?, ?, ?, ?)";
-    public static final String DRIVER = "org.sqlite.JDBC";
-    public static final String URL = "jdbc:sqlite:DemoDB.db";
-
-    Database db = new Database();
+    private static final String SQL_FIND_ALL = "SELECT id, user_id, inc_code, description, created_at FROM incident ORDER BY id";
 
     public Incident insert(Incident i) {
+        Database db = new Database();
         try (Connection conn = db.getConnection();
                 PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -36,5 +39,33 @@ public class IncidentDao {
         } catch (SQLException e) {
             throw new ApplicationException("Error SQL al insertar incidencia");
         }
+    }
+
+    public List<Incident> findAll() {
+        Database db = new Database();
+        try (Connection conn = db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_ALL);
+                ResultSet rs = ps.executeQuery()) {
+
+            List<Incident> out = new ArrayList<>();
+            while (rs.next()) {
+                out.add(map(rs));
+            }
+            return out;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new ApplicationException("Error SQL al listar incidencias");
+        }
+    }
+
+    private Incident map(ResultSet rs) throws SQLException {
+        int id = rs.getInt("id");
+        int userId = rs.getInt("user_id");
+        int incCode = rs.getInt("inc_code");
+        String description = rs.getString("description");
+        System.out.println("TIMESTAMP: " + rs.getString("created_at"));
+        LocalDateTime createdAt = Instant.ofEpochMilli(Long.parseLong(rs.getString("created_at"))).atZone(ZoneId.systemDefault()).toLocalDateTime();
+        return new Incident(id, userId, incCode, description, createdAt);
     }
 }
