@@ -32,7 +32,6 @@ public class ClubApp {
     	try {
             Database db = new Database();
             db.createDatabase(true);
-            db.loadDatabase();
             IncidentsController controller = new IncidentsController();
 
             IncidentWindow window = new IncidentWindow(controller);
