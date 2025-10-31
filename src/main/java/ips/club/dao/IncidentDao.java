@@ -5,16 +5,15 @@ import ips.util.ApplicationException;
 import ips.util.Database;
 
 import java.sql.*;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class IncidentDao {
 
-    private static final String SQL_INSERT = "INSERT INTO incident (user_id, inc_code, description, created_at) VALUES (?, ?, ?, ?)";
-    private static final String SQL_FIND_ALL = "SELECT id, user_id, inc_code, description, created_at FROM incident ORDER BY id";
+    private static final String SQL_INSERT = "INSERT INTO Incident (user_id, inc_code, description, created_at) VALUES (?, ?, ?, ?)";
+    private static final String SQL_FIND_ALL = "SELECT id, user_id, inc_code, description, created_at FROM Incident ORDER BY id";
 
     public Incident insert(Incident i) {
         Database db = new Database();
@@ -24,7 +23,10 @@ public class IncidentDao {
             ps.setInt(1, i.getUserId());
             ps.setInt(2, i.getIncCode());
             ps.setString(3, i.getDescription());
-            ps.setTimestamp(4, Timestamp.valueOf(i.getCreatedAt()));
+            String iso = i.getCreatedAt()
+                    .withNano(0)
+                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            ps.setString(4, iso);
 
             int rows = ps.executeUpdate();
             if (rows != 1) {
@@ -64,8 +66,10 @@ public class IncidentDao {
         int userId = rs.getInt("user_id");
         int incCode = rs.getInt("inc_code");
         String description = rs.getString("description");
-        System.out.println("TIMESTAMP: " + rs.getString("created_at"));
-        LocalDateTime createdAt = Instant.ofEpochMilli(Long.parseLong(rs.getString("created_at"))).atZone(ZoneId.systemDefault()).toLocalDateTime();
+        LocalDateTime createdAt = LocalDateTime.parse(
+        	    rs.getString("created_at"),
+        	    DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        	);
         return new Incident(id, userId, incCode, description, createdAt);
     }
 }

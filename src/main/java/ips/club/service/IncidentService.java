@@ -14,7 +14,7 @@ public class IncidentService {
 
         if (userId <= 0) throw new ApplicationException("userId inválido.");
         if(incCode < 0 ) throw new ApplicationException("Tipo de incidencia inválido.");
-        if (details == null || details.isEmpty()) {throw new ApplicationException("Debes proporcionar el texto requerido para este tipo de incidencia.");}
+        if (details == null || details.trim().isEmpty()) {throw new ApplicationException("Debes proporcionar el texto requerido para este tipo de incidencia.");}
 
         Incident inc = new Incident(null, userId, incCode,details, LocalDateTime.now());
 

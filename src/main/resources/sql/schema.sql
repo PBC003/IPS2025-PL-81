@@ -1,18 +1,19 @@
-drop table Users;
-CREATE TABLE Users (
+-- DROP TABLE Incident;
+-- DROP TABLE Incident_type;
+-- DROP TABLE Users;
+
+CREATE TABLE IF NOT EXISTS Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   email TEXT UNIQUE
 );
 
-drop table Incident_type;
-CREATE TABLE Incident_type (
+CREATE TABLE IF NOT EXISTS Incident_type (
     code INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     type TEXT NOT NULL CHECK (type IN ('location','description'))
 );
 
-drop table Incident;
 CREATE TABLE IF NOT EXISTS Incident (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
