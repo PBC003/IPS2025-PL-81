@@ -1,6 +1,7 @@
 package ips.club.dao;
 
 import ips.club.model.Incident;
+import ips.club.model.IncidentStatus;
 import ips.util.ApplicationException;
 import ips.util.Database;
 
@@ -12,10 +13,13 @@ import java.util.List;
 
 public class IncidentDao {
 
-    private static final String SQL_INSERT = "INSERT INTO Incident (user_id, inc_code, description, created_at) VALUES (?, ?, ?, ?)";
-    private static final String SQL_FIND_ALL = "SELECT id, user_id, inc_code, description, created_at FROM Incident ORDER BY id";
+	private static final String SQL_INSERT =
+		    "INSERT INTO Incident (user_id, inc_code, description, created_at, location_id) VALUES (?, ?, ?, ?, ?)";
 
-    public Incident insert(Incident i) {
+	private static final String SQL_FIND_ALL =
+		    "SELECT id, user_id, inc_code, description, created_at, status, location_id FROM Incident ORDER BY id";
+
+	public Incident insert(Incident i) {
         Database db = new Database();
         try (Connection conn = db.getConnection();
                 PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
@@ -27,6 +31,8 @@ public class IncidentDao {
                     .withNano(0)
                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             ps.setString(4, iso);
+            if (i.getLocationId() == null) ps.setNull(5, Types.INTEGER);
+            else ps.setInt(5, i.getLocationId());
 
             int rows = ps.executeUpdate();
             if (rows != 1) {
@@ -35,7 +41,7 @@ public class IncidentDao {
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 int id = rs.next() ? rs.getInt(1) : null;
-                return new Incident(id, i.getUserId(), i.getIncCode(), i.getDescription(), i.getCreatedAt());
+                return new Incident(id, i.getUserId(), i.getIncCode(), i.getDescription(), i.getCreatedAt(), i.getStatus(), i.getLocationId());
             }
 
         } catch (SQLException e) {
@@ -70,6 +76,9 @@ public class IncidentDao {
         	    rs.getString("created_at"),
         	    DateTimeFormatter.ISO_LOCAL_DATE_TIME
         	);
-        return new Incident(id, userId, incCode, description, createdAt);
+        IncidentStatus status =  IncidentStatus.fromDb(rs.getString("status"));
+        Integer locationId = (Integer) rs.getObject("location_id");
+
+        return new Incident(id, userId, incCode, description, createdAt, status, locationId);
     }
 }

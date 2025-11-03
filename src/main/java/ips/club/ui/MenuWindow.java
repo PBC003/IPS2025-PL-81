@@ -1,6 +1,7 @@
 package ips.club.ui;
 
 import ips.club.controller.IncidentsController;
+import ips.club.controller.LocationsController;
 import ips.club.model.User;
 
 import javax.swing.*;
@@ -14,15 +15,18 @@ public class MenuWindow extends JFrame {
 
     private final User currentUser;
     private final IncidentsController incidentsController;
+    private final LocationsController locationsController;
+
 
     private JLabel lblUser;
     private JButton btnIncidents;
     private JButton btnExit;
 
-    public MenuWindow(User currentUser,IncidentsController incidentsController) {
+    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController) {
         super("Menú principal");
         this.currentUser = currentUser;
         this.incidentsController = incidentsController;
+        this.locationsController = locationsController;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initUI();
@@ -65,7 +69,7 @@ public class MenuWindow extends JFrame {
     }
 
     private void openIncidentsWindow() {
-        IncidentWindow w = new IncidentWindow(incidentsController, currentUser);
+        IncidentWindow w = new IncidentWindow(incidentsController, locationsController, currentUser );
         w.setVisible(true);
     }
 }

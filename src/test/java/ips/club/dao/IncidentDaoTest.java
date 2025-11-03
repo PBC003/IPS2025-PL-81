@@ -1,6 +1,7 @@
 package ips.club.dao;
 
 import ips.club.model.Incident;
+import ips.club.model.IncidentStatus;
 import ips.util.DatabaseTest;
 
 import org.junit.Test;
@@ -16,7 +17,7 @@ public class IncidentDaoTest extends DatabaseTest {
     public void insert_and_findAll() {
         IncidentDao dao = new IncidentDao();
 
-        Incident inc = new Incident(null, 2, 1, "Descripción de prueba", LocalDateTime.now());
+        Incident inc = new Incident(null, 2, 1, "Descripción de prueba", LocalDateTime.now(), IncidentStatus.OPEN, 1);
         Incident saved = dao.insert(inc);
 
         assertNotNull(saved.getId());

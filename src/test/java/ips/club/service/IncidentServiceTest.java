@@ -27,7 +27,7 @@ public class IncidentServiceTest extends DatabaseTest {
         int incCode = anyValidIncidentType();
 
         LocalDateTime before = LocalDateTime.now();
-        Incident out = svc.createTicket(1, incCode, "Prueba 2");
+        Incident out = svc.createTicket(1, incCode, "Prueba 2", 1);
         LocalDateTime after = LocalDateTime.now();
 
         assertNotNull("El ID debe venir asignado tras insertar", out.getId());
@@ -52,16 +52,16 @@ public class IncidentServiceTest extends DatabaseTest {
 
     @Test(expected = ApplicationException.class)
     public void createTicket_InvalidUserId() {
-        new IncidentService().createTicket(0, anyValidIncidentType(), "desc");
+        new IncidentService().createTicket(0, anyValidIncidentType(), "desc", 1);
     }
 
     @Test(expected = ApplicationException.class)
     public void createTicket_InvalidIncCode() {
-        new IncidentService().createTicket(1, -1, "desc");
+        new IncidentService().createTicket(1, -1, "desc", 1);
     }
 
     @Test(expected = ApplicationException.class)
     public void createTicket_EmptyDetails() {
-        new IncidentService().createTicket(1, anyValidIncidentType(), "   ");
+        new IncidentService().createTicket(1, anyValidIncidentType(), "   ", 1);
     }
 }

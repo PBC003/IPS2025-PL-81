@@ -10,13 +10,13 @@ public class IncidentService {
 
     private final IncidentDao dao = new IncidentDao();
 
-    public Incident createTicket(int userId, int incCode, String details) {
+    public Incident createTicket(int userId, int incCode, String details, Integer locationId) {
 
         if (userId <= 0) throw new ApplicationException("userId inválido.");
         if(incCode < 0 ) throw new ApplicationException("Tipo de incidencia inválido.");
         if (details == null || details.trim().isEmpty()) {throw new ApplicationException("Debes proporcionar el texto requerido para este tipo de incidencia.");}
 
-        Incident inc = new Incident(null, userId, incCode,details, LocalDateTime.now());
+        Incident inc = new Incident(null, userId, incCode,details, LocalDateTime.now(), locationId);
 
         return dao.insert(inc);
     }
