@@ -1,8 +1,10 @@
 package ips.club.app;
 
 import ips.club.controller.IncidentsController;
-import ips.club.ui.IncidentWindow;
-import ips.util.Database;
+import ips.club.controller.UsersController;
+import ips.club.model.User;
+import ips.club.ui.LoginWindow;
+import ips.club.ui.MenuWindow;
 
 import javax.swing.*;
 
@@ -21,29 +23,26 @@ public class ClubApp {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-            	runIncidentWindow();
+            	
+            	IncidentsController incController = new IncidentsController();
+                UsersController usersController = new UsersController();
+                LoginWindow login = new LoginWindow(usersController);
+                login.setVisible(true);
+                User selected = login.getSelectedUser();
+                if (selected == null) {
+                    System.out.println("No se seleccionó usuario. Saliendo...");
+                    return;
+                }
+                
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override public void run() {
+                        MenuWindow menu = new MenuWindow(selected, incController);
+                        menu.setVisible(true);
+                    }
+                });
             }
         });
         
         
-    }
-    
-    public static void runIncidentWindow() {
-    	try {
-            Database db = new Database();
-            db.createDatabase(true);
-            IncidentsController controller = new IncidentsController();
-
-            IncidentWindow window = new IncidentWindow(controller);
-            window.setVisible(true);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    null,
-                    "Error iniciando la aplicación:\n" + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }	
     }
 }
