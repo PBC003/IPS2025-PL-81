@@ -1,18 +1,19 @@
 
--- DROP TABLE IF EXISTS Incident;
--- DROP TABLE IF EXISTS Incident_type;
--- DROP TABLE IF EXISTS Location;
--- DROP TABLE IF EXISTS Users;
--- DROP TABLE IF EXISTS Receipt;
--- DROP TABLE IF EXISTS Receipt_batch;
--- DROP INDEX ux_receipt_user_month
+DROP TABLE IF EXISTS Incident;
+DROP TABLE IF EXISTS Incident_type;
+DROP TABLE IF EXISTS Location;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Receipt;
+DROP TABLE IF EXISTS Receipt_batch;
+DROP INDEX ux_receipt_user_month
 
 CREATE TABLE IF NOT EXISTS Users (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
   name    TEXT NOT NULL,
   surname TEXT NOT NULL,
   email   TEXT UNIQUE,
-  iban    TEXT UNIQUE
+  iban    TEXT UNIQUE,
+  monthly_fee_cents INTEGER NOT NULL CHECK (monthly_fee_cents > 0)
 );
 
 CREATE TABLE IF NOT EXISTS Incident_type (

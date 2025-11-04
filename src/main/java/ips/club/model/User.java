@@ -6,9 +6,10 @@ public class User {
     private String surname;
     private String email;
     private String iban;
+    private Integer monthlyFeeCents;
 
-    public User(Integer id, String name, String surname, String email, String iban) {
-        this.id = id; this.name = name; this.surname = surname; this.email = email; this.iban = iban;
+    public User(Integer id, String name, String surname, String email, String iban, Integer monthlyFeeCents) {
+        this.id = id; this.name = name; this.surname = surname; this.email = email; this.iban = iban; this.monthlyFeeCents = monthlyFeeCents;
     }
 
     public Integer getId()              { return id; }
@@ -26,6 +27,9 @@ public class User {
     public String getIban()            { return iban; }
     public void setIban(String iban)  { this.iban = iban; }
 
-    @Override public String toString() { return "User{id="+getId()+", name="+getName()+"}"; }
+    public Integer getMonthlyFeeCents()         { return monthlyFeeCents; }
+    public void setMonthlyFeeCents(Integer monthlyFeeCents) { this.monthlyFeeCents = monthlyFeeCents; }
+
+    @Override public String toString() { return "User{id="+getId()+", name="+getName()+", monthlyFeeCents="+getMonthlyFeeCents()+"}"; }
 
 }

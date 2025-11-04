@@ -1,15 +1,15 @@
 -- USERS
-INSERT INTO Users (name, surname, email, iban) VALUES
-  ('Ana',   'López',    'ana@example.com',   'ES6621000418401234567891'),
-  ('Luis',  'Pérez',    'luis@example.com',  'ES9321000418451234567892'),
-  ('Marta', 'Gómez',    'marta@example.com', 'ES1921000418481234567893'),
-  ('Pablo', 'Ruiz',     'pablo@example.com', 'ES7721000418491234567894'),
-  ('Sara',  'Nunes',    'sara@example.com',  'PT50002700000012345678901'),
-  ('João',  'Silva',    'joao@example.com',  'PT50002700000012345678902'),
-  ('Elena', 'Díaz',     'elena@example.com', 'ES2321000418431234567895'),
-  ('Hugo',  'Martins',  'hugo@example.com',  'PT50002700000012345678903'),
-  ('Carla', 'Sousa',    'carla@example.com', 'PT50002700000012345678904'),
-  ('Diego', 'Torres',   'diego@example.com', 'ES6621000418401234567899');
+INSERT INTO Users (name, surname, email, iban, monthly_fee_cents ) VALUES
+  ('Ana',   'López',    'ana@example.com',   'ES6621000418401234567891', 2600),
+  ('Luis',  'Pérez',    'luis@example.com',  'ES9321000418451234567892' , 2700),
+  ('Marta', 'Gómez',    'marta@example.com', 'ES1921000418481234567893' , 2800),
+  ('Pablo', 'Ruiz',     'pablo@example.com', 'ES7721000418491234567894' , 2900),
+  ('Sara',  'Nunes',    'sara@example.com',  'PT50002700000012345678901' , 2700),
+  ('João',  'Silva',    'joao@example.com',  'PT50002700000012345678902' , 2600),
+  ('Elena', 'Díaz',     'elena@example.com', 'ES2321000418431234567895' , 2000),
+  ('Hugo',  'Martins',  'hugo@example.com',  'PT50002700000012345678903' , 2600),
+  ('Carla', 'Sousa',    'carla@example.com', 'PT50002700000012345678904' , 2200),
+  ('Diego', 'Torres',   'diego@example.com', 'ES6621000418401234567899' , 2400);
 
 -- INCIDENT_TYPE
 INSERT INTO Incident_type (name) VALUES
@@ -52,13 +52,23 @@ INSERT INTO Receipt_batch (charge_month, bank_entity, created_at, status, file_n
 
 -- RECEIPT
 INSERT INTO Receipt (receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id) VALUES
-  ('R-2025-1001', 1, 2000, '2025-10-01', '2025-10-05', '2025-10', 'Cuota mensual gimnasio', 'PAID', 1),
-  ('R-2025-1002', 2, 2500, '2025-10-01', '2025-10-06', '2025-10', 'Cuota mensual piscina', 'PAID', 1),
-  ('R-2025-1003', 3, 1500, '2025-10-01', '2025-10-07', '2025-10', 'Cuota mensual pilates', 'PAID', 1),
-  ('R-2025-1004', 4, 3000, '2025-10-01', '2025-10-08', '2025-10', 'Cuota mensual spa', 'CANCELED', 1),
-  ('R-2025-1005', 5, 2600, '2025-10-01', '2025-10-09', '2025-10', 'Cuota mensual gimnasio', 'PAID', 1),
-  ('R-2025-1101', 6, 2000, '2025-11-01', '2025-11-05', '2025-11', 'Cuota mensual gimnasio', 'GENERATED', 2),
-  ('R-2025-1102', 7, 2500, '2025-11-01', '2025-11-05', '2025-11', 'Cuota mensual piscina', 'GENERATED', 2),
-  ('R-2025-1103', 8, 1500, '2025-11-01', '2025-11-05', '2025-11', 'Cuota mensual pilates', 'GENERATED', 2),
-  ('R-2025-1104', 9, 3000, '2025-11-01', '2025-11-05', '2025-11', 'Cuota mensual spa', 'GENERATED', 2),
-  ('R-2025-1105', 10, 2600, '2025-11-01', '2025-11-05', '2025-11', 'Cuota mensual gimnasio', 'GENERATED', 2);
+  ('AG-2025-11-1', 1, 2600, '2025-11-01', '2025-11-05', '202511', 'Cuota mensual gimnasio', 'PAID', null),
+  ('AG-2025-11-2', 1, 2600, '2025-11-01', '2025-11-05', '202511', 'Cuota mensual gimnasio', 'PAID', null),
+  ('AG-2025-11-3', 2, 2700, '2025-11-01', '2025-11-06', '202511', 'Cuota mensual piscina', 'PAID', null),
+  ('AG-2025-11-4', 2, 2700, '2025-11-01', '2025-11-06', '202511', 'Cuota mensual piscina', 'PAID', null),
+  ('AG-2025-11-5', 3, 1500, '2025-11-01', '2025-11-07', '202511', 'Cuota mensual pilates', 'PAID', null),
+  ('AG-2025-11-6', 3, 1500, '2025-11-01', '2025-11-07', '202511', 'Cuota mensual pilates', 'PAID', null),
+  ('AG-2025-11-7', 4, 3000, '2025-11-01', '2025-11-08', '202511', 'Cuota mensual spa', 'CANCELED', null),
+  ('AG-2025-11-8', 4, 3000, '2025-11-01', '2025-11-08', '202511', 'Cuota mensual spa', 'CANCELED', null),
+  ('AG-2025-11-9', 5, 2800, '2025-11-01', '2025-11-09', '202511', 'Cuota mensual gimnasio', 'PAID', null),
+  ('AG-2025-11-10', 1, 2000, '2025-11-01', '2025-11-05', '202511', 'Cuota mensual gimnasio', 'PAID', null),
+  ('AG-2025-11-11', 1, 2000, '2025-11-01', '2025-11-05', '202511', 'Cuota mensual gimnasio', 'PAID', null),
+  ('AG-2025-11-12', 2, 2500, '2025-11-01', '2025-11-06', '202511', 'Cuota mensual piscina', 'PAID', null),
+  ('AG-2025-11-13', 3, 1500, '2025-11-01', '2025-11-07', '202511', 'Cuota mensual pilates', 'PAID', null),
+  ('AG-2025-11-14', 4, 3000, '2025-11-01', '2025-11-08', '202511', 'Cuota mensual spa', 'CANCELED', null),
+  ('AG-2025-11-15', 5, 2600, '2025-11-01', '2025-11-09', '202511', 'Cuota mensual gimnasio', 'PAID', null)
+  ('AG-2025-11-16', 6, 2200, '2025-11-01', '2025-11-10', '202511', 'Cuota mensual gimnasio', 'PAID', null),
+  ('AG-2025-11-17', 7, 2700, '2025-11-01', '2025-11-11', '202511', 'Cuota mensual piscina', 'PAID', null),
+  ('AG-2025-11-18', 8, 1600, '2025-11-01', '2025-11-12', '202511', 'Cuota mensual pilates', 'PAID', null),
+  ('AG-2025-11-19', 9, 3100, '2025-11-01', '2025-11-13', '202511', 'Cuota mensual spa', 'CANCELED', null),
+  ('AG-2025-11-20', 10, 2800, '2025-11-01', '2025-11-14', '202511', 'Cuota mensual gimnasio', 'PAID', null);

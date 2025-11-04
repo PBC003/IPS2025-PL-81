@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDao {
-    private static final String SQL_FIND_ALL = "SELECT id, name, surname, email, iban FROM Users ORDER BY name";
+    private static final String SQL_FIND_ALL = "SELECT id, name, surname, email, iban, monthly_fee_cents FROM Users ORDER BY name";
 
-    private static final String SQL_FIND_BY_ID = "SELECT id, name, last_name, email, iban FROM Users WHERE id = ?";
+    private static final String SQL_FIND_BY_ID = "SELECT id, name, last_name, email, iban, monthly_fee_cents FROM Users WHERE id = ?";
 
     public User findBasicById(int userId) {
         Database db = new Database();
@@ -25,7 +25,8 @@ public class UserDao {
                         rs.getString("name"),
                         rs.getString("last_name"),
                         rs.getString("email"),
-                        rs.getString("iban")
+                        rs.getString("iban"),
+                        rs.getInt("monthly_fee_cents")
                     );
                 } else {
                     throw new ApplicationException("Usuario no encontrado con ID: " + userId);
@@ -43,7 +44,7 @@ public class UserDao {
              PreparedStatement ps = conn.prepareStatement(SQL_FIND_ALL);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                out.add(new User(rs.getInt("id"), rs.getString("name"), rs.getString("surname"), rs.getString("email"), rs.getString("iban")));
+                out.add(new User(rs.getInt("id"), rs.getString("name"), rs.getString("surname"), rs.getString("email"), rs.getString("iban"), rs.getInt("monthly_fee_cents")));
             }
             return out;
         } catch (SQLException e) {
