@@ -1,87 +1,158 @@
-[![Build Status](https://github.com/javiertuya/samples-test-dev/actions/workflows/test.yml/badge.svg)](https://github.com/javiertuya/samples-test-dev/actions/workflows/test.yml)
-[![Javadoc](https://img.shields.io/badge/%20-javadoc-blue)](https://javiertuya.github.io/samples-test-dev/)
+# IPS2025 · Gestión de Club Deportivo (PL81)
 
-# samples-test-dev
+Aplicación de escritorio para la **gestión integral de clubes deportivos**: incidencias, cuotas/recibos, reservas e intercambio con la federación. El proyecto se desarrolla con **Java (JDK 21)**, arquitectura **MVC con Swing**, **JDBC** y base de datos **SQLite** (entorno local). Sigue un proceso **incremental** con prácticas Scrum.
 
-Este proyecto es utilizado como proyecto base o plantilla para el desarrollo y a modo de ejemplo para ilustrar algunos aspectos del desarrollo y automatización de pruebas para las asignaturas relacionadas con ingenieria del software, sistemas de información y pruebas de software.
+> Inspirado en la estructura de proyecto Maven y buenas prácticas de pruebas/automatización del proyecto plantilla “[samples-test-dev](https://github.com/javiertuya/samples-test-dev)”.
 
-[Descargar la última versión](https://github.com/javiertuya/samples-test-dev/releases) - 
-[Ver más detalles en el javadoc](https://javiertuya.github.io/samples-test-dev/)
+---
 
-## Contenido
+## Tabla de contenidos
 
-Permite ilustrar, entre otros:
-- Repaso del uso de JDBC para acceder a bases de datos
-- Acceso a bases de datos con Apache Commons DbUtils
-- Un conjunto de utilidades para simplificar el acceso a base de datos y el uso de tablas en Swing
-- Implementación de MVC con Swing
-- Automatización de pruebas unitarias con varias versiones de JUnit
-- Estructura y configuración de un proyecto Maven y diferentes reports
+- [IPS2025 · Gestión de Club Deportivo (PL81)](#ips2025--gestión-de-club-deportivo-pl81)
+  - [Tabla de contenidos](#tabla-de-contenidos)
+  - [Resumen del sistema](#resumen-del-sistema)
+  - [Características principales](#características-principales)
+  - [Stack y requisitos](#stack-y-requisitos)
+  - [Arquitectura](#arquitectura)
+  - [Estructura del proyecto](#estructura-del-proyecto)
+  - [Configuración y ejecución](#configuración-y-ejecución)
+    - [1) Variables de entorno / propiedades](#1-variables-de-entorno--propiedades)
+    - [2) Compilar y ejecutar](#2-compilar-y-ejecutar)
+  - [Base de datos](#base-de-datos)
+  - [Pruebas y calidad](#pruebas-y-calidad)
+  - [Flujo de trabajo (Git)](#flujo-de-trabajo-git)
+  - [Roadmap (alto nivel)](#roadmap-alto-nivel)
+  - [Roles](#roles)
 
-Contiene los siguientes paquetes principales:
-- `giis.demo.jdbc`: Repaso de acceso a base de datos con jdbc
-- `giis.demo.tkrun`: Ilustra estructura de proyecto MVC con Swing (TicketRun)
-- `giis.demo.tkrun.ut`: Ilustra pruebas con JUnit para TicketRun
-- `giis.demo.util`: Diferentes utilidades de uso por parte de los anteriores
+---
 
-La estructura es la estándar de maven:
-- `src/main/java`: Codigo fuente de aplicación
-- `src/test/java`: Pruebas unitarias
-- `target`: Generado con el codigo objeto y reports
+## Resumen del sistema
 
-## Requisitos e Instalación
+El sistema busca **optimizar la administración del club**, reduciendo errores manuales y centralizando la información. Se prioriza la **trazabilidad**, la modularidad y el cumplimiento de **RGPD**.
 
-Este proyecto requiere un mínimo de Java 8 JDK.
+---
 
-Preparación del repositorio y del proyecto:
-- Desde GitHub: Crear un **nuevo repositorio** usando este proyecto como plantilla
-  (opción `Use this template` en este repositorio)
-- Desde el entorno de desarrollo local o desde linea de comandos:
-  **Clonar** el repositorio recién creado indicando su url para crear el proyecto en el entorno de desarrollo local
-  (si se hace desde linea de comandos: `git clone <url>`)
-- Cambiar el **nombre del proyecto**: Modificar estos ficheros:
-  - `.project`: cambiar `<name>samples-test-dev</name>` para incluir el nombre del proyecto
-  - `pom.xml`: cambiar `<artifactId>samples-test-dev</artifactId>` para incluir el nombre del proyecto
-  - Recordar hacer push a main tras estos cambios
+## Características principales
 
-## Ejecución del proyecto:
+- **Gestión de incidencias**: alta / seguimiento / resolución de incidencias reportadas por socios.
+- **Gestión económica**: generación de **recibos mensuales**, agrupación en **lotes** y **exportación** en formato bancario.
+- **Reservas y competiciones**: control de reservas e **intercambio con federación** (actor externo).
+- **Escritorio (Swing)** con arquitectura **MVC** y capas de datos/negocio/presentación claramente separadas.
+- **Maven** para compilación, dependencias, javadoc y reports.
 
-- Desde línea de comandos con [Apache Maven](https://maven.apache.org/download.cgi):
-  - Asegurarse de que JAVA_HOME apunta a un JDK y no JRE
-  - Ejecución completa: `mvn install`, incluye generación del Javadoc
-  - Solo pruebas unitarias: `mvn test`, todas las pruebas: `mvn verify`
-  - Ejecución sin tests: `mvn install -DskipTests=true`, genera todos los jar incluyendo javadoc
+---
 
-- Desde Eclipse con M2Eclipse instalado (las distribuciones recientes ya lo incluyen).
-  - Asegurarse de que esta configurado JDK: Desde build path, editar JRE System Library y en Environment
-	comprobar que JavaSE-1.8 apunta a un JDK en vez de un JRE
-  - *Maven->Update Project*: Actualiza todas las dependencias y permite usar el proyecto como 
-    si hubiera sido creado desde el propio Eclipse
-  - *Run As->Maven install*: Ejecuta este (o otros) comandos maven desde Eclipse
-  - Ejecutar los tests en `src/main/test` o el programa principal (aplicación swing)
-    en la clase `giis.demo.util.SwingMain`
+## Stack y requisitos
 
-## Reports
+- **Lenguaje**: Java **21** (JDK 21)
+- **IDE**: Eclipse / IntelliJ (compatible con Maven)
+- **Build**: Apache **Maven 3.9+**
+- **UI**: Swing
+- **Datos**: **SQLite** en local (JDBC)
+- **SO**: Windows / Linux / macOS
 
-La instalacion anterior compilará, ejecutará pruebas y dispondrá de los reports en carpetas dentro de `target`:
-- `reports/testapidocs/index.html`: javadoc del proyecto
-- `reports/surefire.html`: report estandar de las pruebas unitarias (ut)
-- `site/junit*`: report de todas las pruebas con el formato que genera junit
-- `site/jacoco-ut`: reports de cobertura de código
 
-## Personalización de GitHub Actions y Dependabot
+---
 
-Este proyecto está configurado con los correspondientes scripts de Dependabot (para actualización de versiones de dependencias)
-y GitHub actions (para realizar acciones automáticas cuando se realiza un pull request hacia main o un push de una rama).
-A continuación se describen y se indican las posibles personalizaciones a realizar:
+## Arquitectura
 
-- `.github/workflows/test.yml`: Ejecuta automáticamente un build y todas las pruebas unitarias.
-  Si se mantiene,
-  en el caso de que no se tengan pruebas unitarias, modificarlo para que solamente compile la aplicación:
-  - cambiar `verify` por `compile` en la acción `run: mvn verify ...`
-  - eliminar el código a partir de `- name: Publish surefire test report`
-- `.github/workflows/pages.yml`: Exporta el javadoc de la aplicación a GitHub pages cuando se actualiza la rama main.
-  La ejecución del workflow indicará fallo
-  si no se ha configurado el repositorio para ello, por lo que se puede eliminar.
-- `.github/dependabot.yml`: Permite que Dependabot cree una pull request cuando hay alguna dependencia
-  que precisa actualización. Se recomienda mantenerlo y hacer merge de las pull requests que se creen.
+Arquitectura en **tres capas**:
+
+1. **Presentación (Swing)**: ventanas, controladores y listeners.
+2. **Negocio**: servicios y reglas para incidencias, cuotas/lotes, reservas.
+3. **Datos (JDBC)**: DAOs y mapeos a entidades.
+
+---
+
+## Estructura del proyecto
+
+Estructura estándar Maven:
+
+```
+/src
+  /main
+    /java          # código de aplicación (MVC, DAOs, servicios, modelos)
+    /resources     # SQL de inicialización, configuración
+  /test
+    /java          # pruebas unitarias
+target/            # binarios, reports y sitio generado por Maven
+pom.xml
+```
+
+---
+
+## Configuración y ejecución
+
+### 1) Variables de entorno / propiedades
+
+Crea `src/main/resources/application.properties` con tus credenciales:
+
+```properties
+db.url=jdbc:sqlite://localhost:3306/club
+db.driver=org.sqlite.jdbc.Driver
+```
+
+### 2) Compilar y ejecutar
+
+```bash
+# Compilar todo (incluye javadoc y tests)
+mvn install
+
+# Ejecutar sólo tests
+mvn test
+
+# Generar artefactos sin tests (por ejemplo, para probar rápido la app)
+mvn install -DskipTests=true
+```
+
+> En Eclipse: **Maven → Update Project** y **Run As → Maven install**. Verifica que el proyecto usa **JDK** y no un **JRE**.
+
+---
+
+## Base de datos
+
+- **Inicialización**: incluye scripts SQL de esquema/datos en `src/main/resources/sql/` para crear tablas.
+- **Acceso**: **JDBC** directamente desde DAOs y utilidades comunes.
+
+---
+
+## Pruebas y calidad
+
+- **JUnit** para pruebas unitarias.
+- **Informes** generados en `target/` (Surefire, Jacoco, javadoc).
+
+Comandos útiles:
+
+```bash
+# Todas las pruebas y verificación (reports)
+mvn verify
+
+# Solo javadoc del proyecto (publicable como site)
+mvn javadoc:javadoc
+```
+
+---
+
+## Flujo de trabajo (Git)
+
+- Ramas por funcionalidad y **Pull Request** hacia `main`.
+- Commits pequeños y descriptivos.
+
+---
+
+## Roadmap (alto nivel)
+
+1. **Sprint 1**: Gestion de Incidencias y Generacion de Recibos
+2. **Sprint 2**:
+3. **Sprint 3**:
+
+---
+
+## Roles
+
+- **Product Owner**: prioriza backlog y asegura el valor de negocio.
+- **Scrum Master**: facilita el proceso y elimina impedimentos.
+- **Equipo de desarrollo**: diseño, codificación, pruebas y documentación.
+- **Directivo/Administrador (usuario)**: gestión económica, lotes y revisión de incidencias.
+- **Socio (usuario)**: registro y seguimiento de incidencias; reservas.
+- **Federación (actor externo)**: recibe exportaciones (sin acceso directo).
