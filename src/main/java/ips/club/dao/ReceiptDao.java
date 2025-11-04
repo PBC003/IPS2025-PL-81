@@ -30,6 +30,12 @@ public class ReceiptDao {
         "SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
         "FROM Receipt WHERE batch_id = ? ORDER BY id";
 
+    private static final String SQL_LIST_BY_MONTH =
+    	"SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
+    	"FROM Receipt " +
+    	"WHERE charge_month = ? " +
+    	"ORDER BY id";
+
     private static final String PREFIX = "AG";
 
     public Receipt insert(Receipt r) {
@@ -111,6 +117,28 @@ public class ReceiptDao {
         } catch (SQLException e) {
             throw new ApplicationException("Error al listar recibos del lote " + batchId);
         }
+    }
+
+    public List<Receipt> listByMonth(String chargeMonth) {
+        if (chargeMonth == null || chargeMonth.length() != 6) {throw new ApplicationException("chargeMonth inválido: " + chargeMonth);}
+
+        List<Receipt> result = new ArrayList<>();
+        Database db = new Database();
+
+        try (Connection conn = db.getConnection();
+            PreparedStatement ps = conn.prepareStatement(SQL_LIST_BY_MONTH)) {
+
+            ps.setString(1, chargeMonth);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(map(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new ApplicationException("Error listando recibos por mes: " + chargeMonth);
+        }
+        return result;
     }
 
     private String generateNumber(Connection conn, String chargeMonth) throws SQLException {

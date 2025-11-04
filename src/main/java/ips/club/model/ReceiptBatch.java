@@ -7,7 +7,7 @@ public class ReceiptBatch {
     private String chargeMonth;
     private String bankEntity;
     private LocalDateTime createdAt;
-    private ReceiptBatchStatus status = ReceiptBatchStatus.GENERATED;
+    private ReceiptBatchStatus status;
     private String fileName;
     private int totalAmount;
     private int receiptsCnt;

@@ -8,6 +8,7 @@ import ips.util.ApplicationException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 public class ReceiptService {
@@ -47,5 +48,12 @@ public class ReceiptService {
         int month = Integer.parseInt(chargeMonth.substring(4, 6));
         Month m = Month.of(month);
         return "Cuota Club " + m.getDisplayName(java.time.format.TextStyle.FULL, new Locale("es", "ES"));
+    }
+
+    public List<Receipt> listByMonth(String chargeMonth) {
+        if (chargeMonth == null || chargeMonth.length() != 6) {
+            throw new ApplicationException("chargeMonth inválido: " + chargeMonth);
+        }
+        return receiptDao.listByMonth(chargeMonth);
     }
 }
