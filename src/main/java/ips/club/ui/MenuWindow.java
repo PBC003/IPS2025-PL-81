@@ -2,6 +2,7 @@ package ips.club.ui;
 
 import ips.club.controller.IncidentsController;
 import ips.club.controller.LocationsController;
+import ips.club.controller.ReceiptBatchController;
 import ips.club.controller.ReceiptsController;
 import ips.club.model.User;
 
@@ -18,19 +19,21 @@ public class MenuWindow extends JFrame {
     private final IncidentsController incidentsController;
     private final LocationsController locationsController;
     private final ReceiptsController receiptsController;
-
+    private final ReceiptBatchController receiptBatchController;
 
     private JLabel lblUser;
     private JButton btnIncidents;
     private JButton btnReceipts;
     private JButton btnExit;
+    private JButton btnBatch;
 
-    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController) {
+    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController, ReceiptBatchController receiptBatchController) {
         super("Menú principal");
         this.currentUser = currentUser;
         this.incidentsController = incidentsController;
         this.locationsController = locationsController;
         this.receiptsController = receiptsController;
+        this.receiptBatchController = receiptBatchController;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initUI();
@@ -56,6 +59,9 @@ public class MenuWindow extends JFrame {
         btnReceipts = new JButton("Gestión de Recibos");
         center.add(btnReceipts);
 
+        btnBatch= new JButton("Gestión de Lotes");
+        center.add(btnBatch);
+
         root.add(center, BorderLayout.CENTER);
 
         JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -74,6 +80,11 @@ public class MenuWindow extends JFrame {
             	openReceiptsWindow();
             }
         });
+        btnBatch.addActionListener(new ActionListener() {
+            @Override public void actionPerformed(ActionEvent e) {
+            	openReceiptBatchWindow();
+            }
+        });
         btnExit.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 dispose();
@@ -88,6 +99,10 @@ public class MenuWindow extends JFrame {
 
     private void openReceiptsWindow() {
     	ReceiptWindow w = new ReceiptWindow(receiptsController);
+        w.setVisible(true);
+    }
+    private void openReceiptBatchWindow() {
+    	ReceiptBatchWindow w = new ReceiptBatchWindow(receiptBatchController);
         w.setVisible(true);
     }
 }

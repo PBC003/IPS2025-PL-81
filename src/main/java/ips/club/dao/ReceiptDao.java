@@ -12,29 +12,31 @@ import java.util.List;
 
 public class ReceiptDao {
 
-    private static final String SQL_INSERT =
-        "INSERT INTO Receipt (receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)";
+    private static final String SQL_INSERT = "INSERT INTO Receipt (receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)";
 
-    private static final String SQL_NEXT_SEQ_FOR_MONTH =
-        "SELECT COUNT(*) + 1 FROM Receipt WHERE charge_month = ?";
+    private static final String SQL_NEXT_SEQ_FOR_MONTH = "SELECT COUNT(*) + 1 FROM Receipt WHERE charge_month = ?";
 
-    private static final String SQL_LIST_BY_MONTH_NOT_IN_BATCH =
-        "SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
-        "FROM Receipt WHERE charge_month = ? AND batch_id IS NULL ORDER BY id";
+    private static final String SQL_LIST_BY_MONTH_NOT_IN_BATCH = "SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
+            "FROM Receipt WHERE charge_month = ? AND batch_id IS NULL ORDER BY id";
 
-    private static final String SQL_ASSIGN_TO_BATCH =
-        "UPDATE Receipt SET batch_id = ? WHERE id = ?";
+    private static final String SQL_ASSIGN_TO_BATCH = "UPDATE Receipt SET batch_id = ? WHERE id = ?";
 
-    private static final String SQL_LIST_BY_BATCH =
-        "SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
-        "FROM Receipt WHERE batch_id = ? ORDER BY id";
+    private static final String SQL_LIST_BY_BATCH = "SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
+            "FROM Receipt WHERE batch_id = ? ORDER BY id";
 
-    private static final String SQL_LIST_BY_MONTH =
-    	"SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
-    	"FROM Receipt " +
-    	"WHERE charge_month = ? " +
-    	"ORDER BY id";
+    private static final String SQL_LIST_BY_MONTH = "SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
+            "FROM Receipt " +
+            "WHERE charge_month = ? " +
+            "ORDER BY id";
+    private static final String SQL_ASSIGN_RECEIPTS_FMT = "UPDATE Receipt SET batch_id = ? WHERE id IN (%s)";
+
+    private static final String SQL_RELEASE = "UPDATE Receipt SET batch_id = NULL WHERE batch_id = ?";
+
+    private static final String SQL_FIND_UNBATCHED_ALL = "SELECT id, receipt_number, user_id, amount_cents, issue_date, value_date, charge_month, concept, status, batch_id " +
+            "FROM Receipt " +
+            "WHERE (batch_id IS NULL OR batch_id = 0) " +
+            "ORDER BY id";
 
     private static final String PREFIX = "AG";
 
@@ -58,9 +60,13 @@ public class ReceiptDao {
                     ps.setString(7, r.getConcept());
                     ps.setString(8, r.getStatus().name());
 
-                    if (ps.executeUpdate() != 1) throw new ApplicationException("No se insertó el recibo.");
+                    if (ps.executeUpdate() != 1)
+                        throw new ApplicationException("No se insertó el recibo.");
                     Integer id = null;
-                    try (ResultSet rs = ps.getGeneratedKeys()) { if (rs.next()) id = rs.getInt(1); }
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next())
+                            id = rs.getInt(1);
+                    }
 
                     conn.commit();
                     return new Receipt(id, number, r.getUserId(), r.getAmountCents(),
@@ -70,7 +76,9 @@ public class ReceiptDao {
             } catch (Exception ex) {
                 conn.rollback();
                 throw new ApplicationException("Error al insertar recibo");
-            } finally { conn.setAutoCommit(true); }
+            } finally {
+                conn.setAutoCommit(true);
+            }
         } catch (SQLException e) {
             throw new ApplicationException("Conexión fallida al insertar recibo");
         }
@@ -80,10 +88,11 @@ public class ReceiptDao {
         Database db = new Database();
         List<Receipt> out = new ArrayList<>();
         try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_LIST_BY_MONTH_NOT_IN_BATCH)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_LIST_BY_MONTH_NOT_IN_BATCH)) {
             ps.setString(1, chargeMonth);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(map(rs));
+                while (rs.next())
+                    out.add(map(rs));
             }
             return out;
         } catch (SQLException e) {
@@ -94,10 +103,11 @@ public class ReceiptDao {
     public void assignToBatch(int receiptId, int batchId) {
         Database db = new Database();
         try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_ASSIGN_TO_BATCH)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_ASSIGN_TO_BATCH)) {
             ps.setInt(1, batchId);
             ps.setInt(2, receiptId);
-            if (ps.executeUpdate() != 1) throw new ApplicationException("No se asignó el recibo " + receiptId);
+            if (ps.executeUpdate() != 1)
+                throw new ApplicationException("No se asignó el recibo " + receiptId);
         } catch (SQLException e) {
             throw new ApplicationException("Error al asignar recibo a lote");
         }
@@ -119,14 +129,45 @@ public class ReceiptDao {
         }
     }
 
+    public void assignToBatch(int batchId, List<Integer> receiptIds) {
+        if (receiptIds == null || receiptIds.isEmpty()) {
+            throw new ApplicationException("No hay recibos para asignar al lote " + batchId);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < receiptIds.size(); i++) {
+            if (i > 0)
+                sb.append(", ");
+            sb.append("?");
+        }
+        String sql = String.format(SQL_ASSIGN_RECEIPTS_FMT, sb.toString());
+
+        Database db = new Database();
+        try (Connection conn = db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, batchId);
+            for (int i = 0; i < receiptIds.size(); i++) {
+                ps.setInt(i + 2, receiptIds.get(i));
+            }
+            int updated = ps.executeUpdate();
+            if (updated != receiptIds.size()) {
+                throw new ApplicationException("Se esperaban asignar " + receiptIds.size() +
+                        " recibos, pero se asignaron " + updated);
+            }
+        } catch (SQLException e) {
+            throw new ApplicationException("Error al asignar recibos al lote " + batchId);
+        }
+    }
+
     public List<Receipt> listByMonth(String chargeMonth) {
-        if (chargeMonth == null || chargeMonth.length() != 6) {throw new ApplicationException("chargeMonth inválido: " + chargeMonth);}
+        if (chargeMonth == null || chargeMonth.length() != 6) {
+            throw new ApplicationException("chargeMonth inválido: " + chargeMonth);
+        }
 
         List<Receipt> result = new ArrayList<>();
         Database db = new Database();
 
         try (Connection conn = db.getConnection();
-            PreparedStatement ps = conn.prepareStatement(SQL_LIST_BY_MONTH)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_LIST_BY_MONTH)) {
 
             ps.setString(1, chargeMonth);
 
@@ -151,6 +192,39 @@ public class ReceiptDao {
         }
     }
 
+    public void cancelAndReleaseReceipts(int batchId) throws ApplicationException {
+        Database db = new Database();
+        try (Connection c = db.getConnection()) {
+            c.setAutoCommit(false);
+            try (
+                PreparedStatement psRelease = c.prepareStatement(SQL_RELEASE)) {
+                psRelease.setInt(1, batchId);
+                psRelease.executeUpdate();
+                c.commit();
+            }
+        } catch (SQLException e) {
+            throw new ApplicationException("Error cancelando lote: " + e.getMessage());
+        }
+    }
+
+    public List<Receipt> findUnbatchedAll() throws ApplicationException {
+        List<Receipt> list = new ArrayList<>();
+        Database db = new Database();
+
+        try (Connection c = db.getConnection();
+                PreparedStatement ps = c.prepareStatement(SQL_FIND_UNBATCHED_ALL);
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+            return list;
+
+        } catch (SQLException e) {
+            throw new ApplicationException("Error buscando recibos sin lote: " + e.getMessage());
+        }
+    }
+
     private Receipt map(ResultSet rs) throws SQLException {
         Integer id = rs.getInt("id");
         String num = rs.getString("receipt_number");
@@ -161,7 +235,9 @@ public class ReceiptDao {
         String month = rs.getString("charge_month");
         String concept = rs.getString("concept");
         ReceiptStatus st = ReceiptStatus.valueOf(rs.getString("status"));
-        Integer batchId = rs.getInt("batch_id"); if (rs.wasNull()) batchId = null;
+        Integer batchId = rs.getInt("batch_id");
+        if (rs.wasNull())
+            batchId = null;
 
         return new Receipt(id, num, userId, amount, issue, value, month, concept, st, batchId);
     }
