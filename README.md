@@ -1,158 +1,163 @@
 # IPS2025 · Gestión de Club Deportivo (PL81)
 
-Aplicación de escritorio para la **gestión integral de clubes deportivos**: incidencias, cuotas/recibos, reservas e intercambio con la federación. El proyecto se desarrolla con **Java (JDK 21)**, arquitectura **MVC con Swing**, **JDBC** y base de datos **SQLite** (entorno local). Sigue un proceso **incremental** con prácticas Scrum.
+Aplicación de escritorio (Java Swing) para la **gestión integral de un club**: altas de incidencias, seguimiento y cierre; gestión económica con **recibos mensuales**, creación de **lotes de cobro** y **exportación** a fichero; y utilidades de administración. El proyecto sigue una arquitectura en **capas (Modelo · DAO · Servicio · Controlador · UI)** y se apoya en **SQLite** (embebida) para persistencia.
 
-> Inspirado en la estructura de proyecto Maven y buenas prácticas de pruebas/automatización del proyecto plantilla “[samples-test-dev](https://github.com/javiertuya/samples-test-dev)”.
-
----
-
-## Tabla de contenidos
-
-- [IPS2025 · Gestión de Club Deportivo (PL81)](#ips2025--gestión-de-club-deportivo-pl81)
-  - [Tabla de contenidos](#tabla-de-contenidos)
-  - [Resumen del sistema](#resumen-del-sistema)
-  - [Características principales](#características-principales)
-  - [Stack y requisitos](#stack-y-requisitos)
-  - [Arquitectura](#arquitectura)
-  - [Estructura del proyecto](#estructura-del-proyecto)
-  - [Configuración y ejecución](#configuración-y-ejecución)
-    - [1) Variables de entorno / propiedades](#1-variables-de-entorno--propiedades)
-    - [2) Compilar y ejecutar](#2-compilar-y-ejecutar)
-  - [Base de datos](#base-de-datos)
-  - [Pruebas y calidad](#pruebas-y-calidad)
-  - [Flujo de trabajo (Git)](#flujo-de-trabajo-git)
-  - [Roadmap (alto nivel)](#roadmap-alto-nivel)
-  - [Roles](#roles)
+> Proyecto académico de IPS 2025 · PL81. Estructura basada en Maven y buenas prácticas (tests, cobertura, javadoc).
 
 ---
 
-## Resumen del sistema
+## Estado actual (06·nov·2025)
 
-El sistema busca **optimizar la administración del club**, reduciendo errores manuales y centralizando la información. Se prioriza la **trazabilidad**, la modularidad y el cumplimiento de **RGPD**.
+- **BD SQLite** autogenerada a partir de scripts (`schema.sql` + `data.sql`).
+  - Tablas: `Users`, `Incident_type`, `Location`, `Incident`, `Receipt`, `Receipt_batch`.
+  - Reglas importantes:
+    - `Users.iban` **UNIQUE**; `Users.email` **UNIQUE**.
+    - `Receipt`: **un recibo por usuario y mes** (`UNIQUE(user_id, charge_month)`).
+    - Estados:
+      - `Incident.status ∈ {OPEN, ASSIGNED, WAITING_REPLY, CLOSED}`.
+      - `Receipt.status ∈ {GENERATED, PAID, CANCELED}`.
+      - `Receipt_batch.status ∈ {GENERATED, EXPORTED, CANCELED}`.
+- **Capa de datos (DAO)** y **servicios** implementados para Usuarios, Incidencias, Recibos y Lotes.
+- **UI Swing** funcional:
+  - **Login** → selección de usuario → **Menú principal**.
+  - Ventana **Incidencias** (listado, alta, estados, filtro por tipo/localización).
+  - Ventana **Recibos** (creación individual por usuario/mes/concepto).
+  - Ventana **Lotes de recibos**:
+    - Listado de recibos **sin lote** y asignación a un lote.
+    - **Exportación** a fichero (CSV simple configurable por servicio).
+- **Servicios auxiliares**:
+  - `ReceiptExportService`: genera archivo de exportación con sumatorio e integración básica.
+  - `Database`/`DbUtil`: inicialización **idempotente** de BD desde `application.properties`.
 
----
-
-## Características principales
-
-- **Gestión de incidencias**: alta / seguimiento / resolución de incidencias reportadas por socios.
-- **Gestión económica**: generación de **recibos mensuales**, agrupación en **lotes** y **exportación** en formato bancario.
-- **Reservas y competiciones**: control de reservas e **intercambio con federación** (actor externo).
-- **Escritorio (Swing)** con arquitectura **MVC** y capas de datos/negocio/presentación claramente separadas.
-- **Maven** para compilación, dependencias, javadoc y reports.
 
 ---
 
 ## Stack y requisitos
 
-- **Lenguaje**: Java **21** (JDK 21)
-- **IDE**: Eclipse / IntelliJ (compatible con Maven)
-- **Build**: Apache **Maven 3.9+**
-- **UI**: Swing
-- **Datos**: **SQLite** en local (JDBC)
-- **SO**: Windows / Linux / macOS
-
-
----
-
-## Arquitectura
-
-Arquitectura en **tres capas**:
-
-1. **Presentación (Swing)**: ventanas, controladores y listeners.
-2. **Negocio**: servicios y reglas para incidencias, cuotas/lotes, reservas.
-3. **Datos (JDBC)**: DAOs y mapeos a entidades.
+- **JDK**: 8+ (pom configura `maven.compiler.source/target` a 1.8).
+- **Maven**: 3.8+
+- **SQLite JDBC**: `org.xerial:sqlite-jdbc:3.50.3.0`
+- **Logging**: SLF4J + log4j (puente `slf4j-reload4j`).
+- **UI**: Swing + MigLayout
+- **Testing**: JUnit 4 + JUnitParams; cobertura con **JaCoCo**.
 
 ---
 
 ## Estructura del proyecto
 
-Estructura estándar Maven:
-
 ```
-/src
-  /main
-    /java          # código de aplicación (MVC, DAOs, servicios, modelos)
-    /resources     # SQL de inicialización, configuración
-  /test
-    /java          # pruebas unitarias
-target/            # binarios, reports y sitio generado por Maven
+src/
+  main/
+    java/ips/
+      club/
+        app/ClubApp.java                 # Punto de entrada
+        controller/                      # Controladores de UI
+        dao/                             # Acceso a datos (JDBC)
+        dto/                             # DTOs para la UI
+        model/                           # Entidades y enums
+        service/                         # Reglas de negocio
+        ui/                              # Ventanas Swing
+      util/                              # Database, DbUtil, excepciones
+    resources/
+      application.properties             # driver/url SQLite
+      sql/
+        schema.sql                       # DDL completo
+        data.sql                         # Datos de ejemplo
+test/
+  java/ips/...                           # Tests JUnit
+exports/
+  batch/
 pom.xml
 ```
 
 ---
 
-## Configuración y ejecución
+## Configuración
 
-### 1) Variables de entorno / propiedades
-
-Crea `src/main/resources/application.properties` con tus credenciales:
+Crea/ajusta `src/main/resources/application.properties`:
 
 ```properties
-db.url=jdbc:sqlite://localhost:3306/club
-db.driver=org.sqlite.jdbc.Driver
+datasource.driver=org.sqlite.JDBC
+datasource.url=jdbc:sqlite:ClubDB.db
 ```
 
-### 2) Compilar y ejecutar
+- La BD se crea en el **primer arranque** (si no existe) ejecutando `sql/schema.sql` y se precarga con `sql/data.sql`.
+- Para reinicializar manualmente, borra `ClubDB.db` y vuelve a ejecutar la app.
+> Actualmente la base de datos se reinicia en cada ejecucion
+
+---
+
+## Cómo compilar y ejecutar
 
 ```bash
-# Compilar todo (incluye javadoc y tests)
-mvn install
+# 1) Compilar + tests + cobertura
+mvn -q clean test
 
-# Ejecutar sólo tests
-mvn test
+# 2) Generar JAR y javadoc de pruebas
+mvn -q install
 
-# Generar artefactos sin tests (por ejemplo, para probar rápido la app)
-mvn install -DskipTests=true
+# 3) Ejecutar desde IDE: Main = ips.club.app.ClubApp
+java -cp target/IPS2025-PL-81-*.jar:target/dependency/* ips.club.app.ClubApp
 ```
 
-> En Eclipse: **Maven → Update Project** y **Run As → Maven install**. Verifica que el proyecto usa **JDK** y no un **JRE**.
+
 
 ---
 
-## Base de datos
+## Funcionalidad actual (detallada)
 
-- **Inicialización**: incluye scripts SQL de esquema/datos en `src/main/resources/sql/` para crear tablas.
-- **Acceso**: **JDBC** directamente desde DAOs y utilidades comunes.
+### Incidencias
+- Alta de incidencia asociada a **usuario** y **tipo** (`Incident_type`).
+- Estados soportados: `OPEN`, `ASSIGNED`, `WAITING_REPLY`, `CLOSED`.
+- **Localización** opcional (`Location`) visible cuando el tipo es *Instalaciones*.
+- Listado con formateo y mapeo de códigos → nombres, sin duplicar la lógica en el modelo.
 
----
+### Recibos
+- Creación de recibos **individuales** por usuario:
+  - `amount_cents`, `issue_date`, `value_date`, `charge_month` (formato `YYYYMM`), `concept`.
+  - Validación por servicio y restricción de **un recibo/mes/usuario**.
+- Estados: `GENERATED`, `PAID`, `CANCELED`.
 
-## Pruebas y calidad
-
-- **JUnit** para pruebas unitarias.
-- **Informes** generados en `target/` (Surefire, Jacoco, javadoc).
-
-Comandos útiles:
-
-```bash
-# Todas las pruebas y verificación (reports)
-mvn verify
-
-# Solo javadoc del proyecto (publicable como site)
-mvn javadoc:javadoc
-```
-
----
-
-## Flujo de trabajo (Git)
-
-- Ramas por funcionalidad y **Pull Request** hacia `main`.
-- Commits pequeños y descriptivos.
+### Lotes de recibos
+- **Crear lote** con `charge_month`, `bank_entity`, `file_name`.
+- Agregar recibos **sin lote** a un lote determinado.
+- **Exportación** a fichero (CSV simple) y actualización de:
+  - `Receipt_batch.total_amount`
+  - `Receipt_batch.receipts_cnt`
+  - Cambio de `status` a `EXPORTED`.
+- Política actual: el nombre de fichero se **introduce tal cual** (sin forzar extensión).
 
 ---
 
-## Roadmap (alto nivel)
+## Decisiones de diseño
 
-1. **Sprint 1**: Gestion de Incidencias y Generacion de Recibos
-2. **Sprint 2**:
-3. **Sprint 3**:
+- **Capas claras**: los controladores son delgados; la lógica reside en **servicios**.
+- **Validación**: reglas de negocio en servicios antes de delegar en DAO.
+- **SQLite** para desarrollo/docencia: cero dependencias externas; scripts versionados.
+- **Enums** para estados (`IncidentStatus`, `ReceiptStatus`, `ReceiptBatchStatus`).
+- **UI** desacoplada: ventanas (`ui/*`) no acceden directamente a JDBC.
 
 ---
 
-## Roles
+## Roadmap próximo (shortlist)
 
-- **Product Owner**: prioriza backlog y asegura el valor de negocio.
-- **Scrum Master**: facilita el proceso y elimina impedimentos.
-- **Equipo de desarrollo**: diseño, codificación, pruebas y documentación.
-- **Directivo/Administrador (usuario)**: gestión económica, lotes y revisión de incidencias.
-- **Socio (usuario)**: registro y seguimiento de incidencias; reservas.
-- **Federación (actor externo)**: recibe exportaciones (sin acceso directo).
+- [ ] Implementación del sistema de competiciones para automatizar el registro y envío a la federación
+- [ ] Implementación de sistema inteligente de gestión de reservas
+- [ ] Hacer la plataforma auditable y que cumpla con el RGPD
+- [ ] Como directivo quiero poder consultar los datos económicos del club
+
+
+---
+
+## Contribuciones (workflow básico)
+
+1. Crea rama a partir de `main` (IPS-xxxxx).
+2. Commits pequeños y con mensaje claro.
+3. **PR** con descripción.
+4. *Squash & merge* tras revisión.
+
+---
+
+## Créditos
+
+- Estructura inspirada en [samples-test-dev](https://github.com/javiertuya/samples-test-dev)”.
