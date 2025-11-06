@@ -8,44 +8,63 @@ import ips.club.model.ReceiptBatch;
 import ips.club.model.User;
 import ips.util.ApplicationException;
 
-import java.io.BufferedWriter;
 import java.nio.file.*;
+import java.time.LocalTime;
+import java.io.BufferedWriter;
 
 import java.util.List;
 
 public class ReceiptExportService {
 
-    private static final Path EXPORT_DIR = Paths.get("exports");
+    Path repoRoot = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+    Path exportDir = repoRoot.resolve("exports").resolve("batch");
 
     private final ReceiptDao receiptDao = new ReceiptDao();
     private final ReceiptBatchDao batchDao = new ReceiptBatchDao();
     private final UserDao userDao = new UserDao();
 
     public Path exportBatchToCsvUsingBatchFileName(int batchId) {
-        if (batchId <= 0) throw new ApplicationException("batchId inválido.");
+        if (batchId <= 0)
+            throw new ApplicationException("batchId inválido.");
 
         ReceiptBatch batch = batchDao.findById(batchId);
-        if (batch == null) throw new ApplicationException("Lote no encontrado: " + batchId);
+        if (batch == null)
+            throw new ApplicationException("Lote no encontrado: " + batchId);
 
         String fileName = batch.getFileName();
-        if (fileName == null || fileName.trim().isEmpty()) {throw new ApplicationException("El lote " + batchId + " no tiene 'file_name'. Asigna uno antes de exportar.");}
+        if (fileName == null || fileName.trim().isEmpty()) {
+            throw new ApplicationException(
+                    "El lote " + batchId + " no tiene 'file_name'. Asigna uno antes de exportar.");
+        }
 
-        try { Files.createDirectories(EXPORT_DIR); }
-        catch (Exception e) { throw new ApplicationException("No se pudo crear la carpeta de exportación: " + EXPORT_DIR); }
+        String base = (fileName == null || fileName.trim().isEmpty()) ? "batch_" + LocalTime.now().toString()
+                : fileName.trim();
+        base = base.replaceAll("[\\\\/:*?\"<>|]+", "_");
+        if (!base.toLowerCase().endsWith(".csv"))
+            base += ".csv";
 
-        Path csvPath = EXPORT_DIR.resolve(fileName);
+        Path csvPath = exportDir.resolve(base).normalize();
 
         List<Receipt> items = receiptDao.listByBatch(batchId);
-        if (items.isEmpty()) throw new ApplicationException("El lote " + batchId + " no tiene recibos.");
+        if (items.isEmpty())
+            throw new ApplicationException("El lote " + batchId + " no tiene recibos.");
 
-        try (BufferedWriter w = Files.newBufferedWriter(csvPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        System.out.println("Export dir exists? " + Files.exists(csvPath.getParent()));
+        System.out.println("Is dir? " + Files.isDirectory(csvPath.getParent()));
+        System.out.println("Target exists? " + Files.exists(csvPath));
+
+        try (BufferedWriter w = Files.newBufferedWriter(csvPath, StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             w.write("receipt_number,member_name,member_surname,member_iban,amount_cents,value_date,issue_date,charge_month,concept");
             w.newLine();
 
             for (Receipt r : items) {
                 User u = userDao.findBasicById(r.getUserId());
 
-                if (u.getIban() == null || u.getIban().trim().isEmpty()) {throw new ApplicationException("El socio id=" + u.getId() + " no tiene IBAN; no se puede exportar el lote.");}
+                if (u.getIban() == null || u.getIban().trim().isEmpty()) {
+                    throw new ApplicationException(
+                            "El socio id=" + u.getId() + " no tiene IBAN; no se puede exportar el lote.");
+                }
 
                 String concept = r.getConcept().replace("\"", "\"\"");
                 String line = String.join(",",
@@ -57,14 +76,13 @@ public class ReceiptExportService {
                         r.getValueDate().toString(),
                         r.getIssueDate().toString(),
                         r.getChargeMonth(),
-                        "\"" + concept + "\""
-                );
+                        "\"" + concept + "\"");
 
                 w.write(line);
                 w.newLine();
             }
         } catch (Exception e) {
-            throw new ApplicationException("No se pudo escribir el CSV en " + csvPath);
+            throw new ApplicationException("No se pudo escribir el CSV en " + csvPath + ": " + e.getMessage());
         }
 
         batchDao.updateTotalsAndMarkExported(batchId, fileName);
@@ -72,5 +90,7 @@ public class ReceiptExportService {
         return csvPath;
     }
 
-    private String safe(String s) { return s == null ? "" : s; }
+    private String safe(String s) {
+        return s == null ? "" : s;
+    }
 }
