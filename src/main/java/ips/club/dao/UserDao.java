@@ -11,7 +11,7 @@ import java.util.List;
 public class UserDao {
     private static final String SQL_FIND_ALL = "SELECT id, name, surname, email, iban, monthly_fee_cents FROM Users ORDER BY name";
 
-    private static final String SQL_FIND_BY_ID = "SELECT id, name, last_name, email, iban, monthly_fee_cents FROM Users WHERE id = ?";
+    private static final String SQL_FIND_BY_ID = "SELECT id, name, surname, email, iban, monthly_fee_cents FROM Users WHERE id = ?";
 
     private static final String SQL_FIND_ALL_WITHOUT_RECEIPT_FOR =
         "SELECT u.id, u.name, u.surname, u.email, u.iban, u.monthly_fee_cents " +
@@ -30,7 +30,7 @@ public class UserDao {
                     return new User(
                         rs.getInt("id"),
                         rs.getString("name"),
-                        rs.getString("last_name"),
+                        rs.getString("surname"),
                         rs.getString("email"),
                         rs.getString("iban"),
                         rs.getInt("monthly_fee_cents")
