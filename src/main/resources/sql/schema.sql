@@ -1,13 +1,18 @@
 
--- DROP TABLE IF EXISTS Incident;
--- DROP TABLE IF EXISTS Incident_type;
--- DROP TABLE IF EXISTS Location;
--- DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Incident;
+DROP TABLE IF EXISTS Incident_type;
+DROP TABLE IF EXISTS Location;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Receipt;
+DROP TABLE IF EXISTS Receipt_batch;
 
 CREATE TABLE IF NOT EXISTS Users (
-  id    INTEGER PRIMARY KEY AUTOINCREMENT,
-  name  TEXT NOT NULL,
-  email TEXT UNIQUE
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  name    TEXT NOT NULL,
+  surname TEXT NOT NULL,
+  email   TEXT UNIQUE,
+  iban    TEXT UNIQUE,
+  monthly_fee_cents INTEGER NOT NULL CHECK (monthly_fee_cents > 0)
 );
 
 CREATE TABLE IF NOT EXISTS Incident_type (
@@ -32,3 +37,35 @@ CREATE TABLE IF NOT EXISTS Incident (
   FOREIGN KEY (inc_code) REFERENCES Incident_type(code) ON DELETE RESTRICT,
   FOREIGN KEY (location_id) REFERENCES Location(id)     ON DELETE RESTRICT
 );
+
+CREATE TABLE IF NOT EXISTS Receipt (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  receipt_number  TEXT UNIQUE,
+  user_id         INTEGER NOT NULL,
+  amount_cents    INTEGER NOT NULL,
+  issue_date      TEXT NOT NULL,
+  value_date      TEXT NOT NULL,
+  charge_month    TEXT NOT NULL,
+  concept         TEXT NOT NULL,
+  status          TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED','PAID','CANCELED')),
+  batch_id        INTEGER,
+  FOREIGN KEY(batch_id) REFERENCES Receipt_batch(id),
+  FOREIGN KEY(user_id) REFERENCES Users(id)
+);
+
+CREATE TABLE IF NOT EXISTS Receipt_batch (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  charge_month  TEXT NOT NULL,
+  bank_entity   TEXT NOT NULL,
+  created_at    TEXT NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED','EXPORTED','CANCELED')),
+  file_name     TEXT NOT NULL,
+  total_amount  INTEGER NOT NULL DEFAULT 0,
+  receipts_cnt  INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS receipt_per_month
+  ON Receipt(user_id, charge_month);
+
+CREATE INDEX IF NOT EXISTS receipt_per_batch
+  ON Receipt(batch_id);
