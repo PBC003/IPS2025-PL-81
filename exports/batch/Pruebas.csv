@@ -1,0 +1,3 @@
+receipt_number,member_name,member_surname,member_iban,amount_cents,value_date,issue_date,charge_month,concept
+AG-202511-2,Luis,Pérez,ES9321000418451234567892,2600,2025-11-05,2025-11-01,202511,"Cuota mensual gimnasio"
+AG-202511-8,Hugo,Martins,PT50002700000012345678903,3000,2025-11-08,2025-11-01,202511,"Cuota mensual spa"
