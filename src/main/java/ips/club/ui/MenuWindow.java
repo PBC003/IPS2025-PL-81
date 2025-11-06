@@ -4,6 +4,7 @@ import ips.club.controller.IncidentsController;
 import ips.club.controller.LocationsController;
 import ips.club.controller.ReceiptBatchController;
 import ips.club.controller.ReceiptsController;
+import ips.club.controller.UsersController;
 import ips.club.model.User;
 
 import javax.swing.*;
@@ -20,6 +21,7 @@ public class MenuWindow extends JFrame {
     private final LocationsController locationsController;
     private final ReceiptsController receiptsController;
     private final ReceiptBatchController receiptBatchController;
+    private final UsersController usersController;
 
     private JLabel lblUser;
     private JButton btnIncidents;
@@ -27,12 +29,13 @@ public class MenuWindow extends JFrame {
     private JButton btnExit;
     private JButton btnBatch;
 
-    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController, ReceiptBatchController receiptBatchController) {
+    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController, ReceiptBatchController receiptBatchController, UsersController usersController) {
         super("Menú principal");
         this.currentUser = currentUser;
         this.incidentsController = incidentsController;
         this.locationsController = locationsController;
         this.receiptsController = receiptsController;
+        this.usersController = usersController;
         this.receiptBatchController = receiptBatchController;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -98,7 +101,7 @@ public class MenuWindow extends JFrame {
     }
 
     private void openReceiptsWindow() {
-    	ReceiptWindow w = new ReceiptWindow(receiptsController);
+    	ReceiptWindow w = new ReceiptWindow(receiptsController, usersController);
         w.setVisible(true);
     }
     private void openReceiptBatchWindow() {

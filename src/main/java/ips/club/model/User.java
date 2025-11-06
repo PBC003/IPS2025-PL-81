@@ -30,6 +30,6 @@ public class User {
     public Integer getMonthlyFeeCents()         { return monthlyFeeCents; }
     public void setMonthlyFeeCents(Integer monthlyFeeCents) { this.monthlyFeeCents = monthlyFeeCents; }
 
-    @Override public String toString() { return "User{id="+getId()+", name="+getName()+", monthlyFeeCents="+getMonthlyFeeCents()+"}"; }
+    @Override public String toString() { return String.format("[%d] %s", getId(), name + " " + surname); }
 
 }

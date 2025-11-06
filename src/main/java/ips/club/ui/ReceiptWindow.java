@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import ips.club.controller.ReceiptsController;
+import ips.club.controller.UsersController;
 import ips.club.model.Receipt;
 
 import java.awt.*;
@@ -17,19 +18,22 @@ import java.util.List;
 public class ReceiptWindow extends JDialog {
 
     private final ReceiptsController controller;
+    private final UsersController usersController;
 
     private final JLabel title = new JLabel("Recibos", SwingConstants.LEFT);
     private final JTable table = new JTable();
     private final JButton btnRefresh = new JButton("Refrescar");
     private final JButton btnGenerate = new JButton("Generar mes…");
     private final JButton btnClose = new JButton("Cerrar");
+    private final JButton btnCrearRecibo = new JButton("Crear Recibo…");
 
     private final JComboBox<Integer> cbYear = new JComboBox<>();
     private final JComboBox<Integer> cbMonth = new JComboBox<>();
 
-    public ReceiptWindow(ReceiptsController controller) {
+    public ReceiptWindow(ReceiptsController controller, UsersController usersController) {
         super(null, "Recibos", ModalityType.MODELESS);
         this.controller = controller;
+        this.usersController = usersController;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setSize(900, 520);
         setLocationRelativeTo(null);
@@ -56,7 +60,7 @@ public class ReceiptWindow extends JDialog {
         actions.add(btnRefresh);
         actions.add(btnGenerate);
         actions.add(btnClose);
-
+        actions.add(btnCrearRecibo);
         JScrollPane center = new JScrollPane(table);
 
         JPanel root = new JPanel(new BorderLayout(8, 8));
@@ -98,6 +102,12 @@ public class ReceiptWindow extends JDialog {
                 onGenerate();
             }
         });
+        btnCrearRecibo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onCrearRecibo();
+            }
+        });
 
         loadData();
         updateGenerateButtonEnabled();
@@ -129,7 +139,7 @@ public class ReceiptWindow extends JDialog {
 
                 model.addRow(new Object[] {
                         r.getReceiptNumber(), r.getUserId(),
-                        r.getChargeMonth(), r.getAmountCents()/100+"€",
+                        r.getChargeMonth(), r.getAmountCents() / 100 + "€",
                         r.getStatus().name(), batchId,
                         r.getIssueDate().toString(), r.getValueDate(),
                         r.getConcept()
@@ -168,7 +178,8 @@ public class ReceiptWindow extends JDialog {
                 "Confirmar generación",
                 JOptionPane.OK_CANCEL_OPTION);
 
-        if (ok != JOptionPane.OK_OPTION)return;
+        if (ok != JOptionPane.OK_OPTION)
+            return;
 
         try {
             int created = controller.generateAllMonthlyReceipts(yyyymm);
@@ -179,6 +190,11 @@ public class ReceiptWindow extends JDialog {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void onCrearRecibo() {
+        CreateReceiptWindow w = new CreateReceiptWindow(controller, usersController);
+        w.setVisible(true);
     }
 
 }

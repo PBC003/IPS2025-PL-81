@@ -49,7 +49,7 @@ public class ClubApp {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        MenuWindow menu = new MenuWindow(selected, incController, locationsController, receiptsController, receiptBatchController);
+                        MenuWindow menu = new MenuWindow(selected, incController, locationsController, receiptsController, receiptBatchController, usersController);
                         menu.setVisible(true);
                     }
                 });

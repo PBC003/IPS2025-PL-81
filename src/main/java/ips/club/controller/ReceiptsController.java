@@ -43,15 +43,22 @@ public class ReceiptsController {
         LocalDate valueDate = LocalDate.now().plusMonths(3);
         Integer counter = 0;
 
-        for (Receipt r : monthReceipts) {userDoneListId.add(r.getUserId());}
+        for (Receipt r : monthReceipts) {
+            userDoneListId.add(r.getUserId());
+        }
 
         for (User r : allUsers) {
             if (!userDoneListId.contains(r.getId())) {
-                this.createMonthlyReceipt(r.getId(), r.getMonthlyFeeCents(), valueDate, yyyymm, null);
+                receiptService.createMonthlyReceipt(r.getId(), r.getMonthlyFeeCents(), valueDate, yyyymm, null);
                 counter++;
             }
         }
 
         return counter;
     }
+
+    public Receipt createManualReceipt(int userId, int amountCents, String concepto) {
+        return receiptService.createMonthlyReceipt(userId, amountCents, null, null, concepto);
+    }
+
 }
