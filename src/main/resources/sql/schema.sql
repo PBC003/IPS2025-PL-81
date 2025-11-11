@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS Users (
   surname TEXT NOT NULL,
   email   TEXT UNIQUE,
   iban    TEXT UNIQUE,
-  monthly_fee_cents INTEGER NOT NULL CHECK (monthly_fee_cents > 0)
+  monthly_fee_cents INTEGER NOT NULL CHECK (monthly_fee_cents > 0),
+  role TEXT NOT NULL CHECK (role IN ('USER','ADMIN'))
 );
 
 CREATE TABLE IF NOT EXISTS Incident_type (
