@@ -4,6 +4,7 @@ import ips.club.controller.IncidentsController;
 import ips.club.controller.LocationsController;
 import ips.club.controller.ReceiptBatchController;
 import ips.club.controller.ReceiptsController;
+import ips.club.controller.ReservationController;
 import ips.club.controller.UsersController;
 import ips.club.model.User;
 
@@ -22,14 +23,16 @@ public class MenuWindow extends JFrame {
     private final ReceiptsController receiptsController;
     private final ReceiptBatchController receiptBatchController;
     private final UsersController usersController;
+    private final ReservationController reservationController;
 
     private JLabel lblUser;
     private JButton btnIncidents;
     private JButton btnReceipts;
     private JButton btnExit;
     private JButton btnBatch;
+    private JButton btnReservations;
 
-    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController, ReceiptBatchController receiptBatchController, UsersController usersController) {
+    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController, ReceiptBatchController receiptBatchController, UsersController usersController, ReservationController reservationController) {
         super("Menú principal");
         this.currentUser = currentUser;
         this.incidentsController = incidentsController;
@@ -37,6 +40,7 @@ public class MenuWindow extends JFrame {
         this.receiptsController = receiptsController;
         this.usersController = usersController;
         this.receiptBatchController = receiptBatchController;
+        this.reservationController = reservationController;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initUI();
@@ -59,6 +63,9 @@ public class MenuWindow extends JFrame {
         btnIncidents = new JButton("Gestión de incidencias");
         center.add(btnIncidents);
 
+        btnReservations = new JButton("Gestión de Reservas");
+        center.add(btnReservations);
+
         btnReceipts = new JButton("Gestión de Recibos");
         if (currentUser.getRole().equals("ADMIN")) center.add(btnReceipts);
 
@@ -75,6 +82,12 @@ public class MenuWindow extends JFrame {
         btnIncidents.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 openIncidentsWindow();
+            }
+        });
+
+        btnReservations.addActionListener(new ActionListener() {
+            @Override public void actionPerformed(ActionEvent e) {
+                openReservationsWindow();
             }
         });
 
@@ -106,6 +119,10 @@ public class MenuWindow extends JFrame {
     }
     private void openReceiptBatchWindow() {
     	ReceiptBatchWindow w = new ReceiptBatchWindow(receiptBatchController);
+        w.setVisible(true);
+    }
+    private void openReservationsWindow() {
+        ReservationListWindow w = new ReservationListWindow(reservationController, currentUser.getId());
         w.setVisible(true);
     }
 }
