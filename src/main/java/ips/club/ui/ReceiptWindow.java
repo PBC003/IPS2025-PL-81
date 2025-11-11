@@ -58,9 +58,9 @@ public class ReceiptWindow extends JDialog {
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         actions.add(btnRefresh);
-        actions.add(btnGenerate);
+        //actions.add(btnGenerate);
         actions.add(btnClose);
-        actions.add(btnCrearRecibo);
+        //actions.add(btnCrearRecibo);
         JScrollPane center = new JScrollPane(table);
 
         JPanel root = new JPanel(new BorderLayout(8, 8));

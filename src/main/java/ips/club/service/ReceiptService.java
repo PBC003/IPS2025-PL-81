@@ -44,7 +44,7 @@ public class ReceiptService {
         return date.format(DateTimeFormatter.ofPattern("yyyyMM"));
     }
 
-    private String defaultConceptFromMonth(String chargeMonth) {
+    public String defaultConceptFromMonth(String chargeMonth) {
         if (chargeMonth == null || chargeMonth.length() != 6) {throw new ApplicationException("chargeMonth inválido: " + chargeMonth);}
         int month = Integer.parseInt(chargeMonth.substring(4, 6));
         Month m = Month.of(month);
