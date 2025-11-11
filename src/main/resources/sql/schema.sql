@@ -5,6 +5,8 @@ DROP TABLE IF EXISTS Location;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Receipt;
 DROP TABLE IF EXISTS Receipt_batch;
+DROP TABLE IF EXISTS Reservation;
+
 
 CREATE TABLE IF NOT EXISTS Users (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,8 +67,26 @@ CREATE TABLE IF NOT EXISTS Receipt_batch (
   receipts_cnt  INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS Reservation (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id       INTEGER NOT NULL,
+  location_id   INTEGER NOT NULL,
+  start_time    TEXT    NOT NULL,
+  end_time      TEXT    NOT NULL,
+  minutes       INTEGER NOT NULL CHECK (minutes > 0),
+  created_at    TEXT    NOT NULL,
+  FOREIGN KEY(user_id)     REFERENCES Users(id),
+  FOREIGN KEY(location_id) REFERENCES Location(id)
+);
+
 CREATE UNIQUE INDEX IF NOT EXISTS receipt_per_month
   ON Receipt(user_id, charge_month);
 
 CREATE INDEX IF NOT EXISTS receipt_per_batch
   ON Receipt(batch_id);
+
+CREATE INDEX IF NOT EXISTS idx_res_by_location_time
+  ON Reservation(location_id, start_time, end_time);
+
+CREATE INDEX IF NOT EXISTS idx_res_by_user_time
+  ON Reservation(user_id,    start_time, end_time);

@@ -4,6 +4,7 @@ import ips.club.controller.IncidentsController;
 import ips.club.controller.LocationsController;
 import ips.club.controller.ReceiptBatchController;
 import ips.club.controller.ReceiptsController;
+import ips.club.controller.ReservationController;
 import ips.club.controller.UsersController;
 import ips.club.model.User;
 import ips.club.ui.LoginWindow;
@@ -38,6 +39,7 @@ public class ClubApp {
                 LocationsController locationsController = new LocationsController();
                 ReceiptsController receiptsController = new ReceiptsController();
                 ReceiptBatchController receiptBatchController = new ReceiptBatchController();
+                ReservationController reservationController = new ReservationController();
 
                 LoginWindow login = new LoginWindow(usersController);
                 login.setVisible(true);
@@ -49,7 +51,7 @@ public class ClubApp {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        MenuWindow menu = new MenuWindow(selected, incController, locationsController, receiptsController, receiptBatchController, usersController);
+                        MenuWindow menu = new MenuWindow(selected, incController, locationsController, receiptsController, receiptBatchController, usersController, reservationController);
                         menu.setVisible(true);
                     }
                 });
