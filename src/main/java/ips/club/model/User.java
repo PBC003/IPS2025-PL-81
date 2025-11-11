@@ -7,9 +7,10 @@ public class User {
     private String email;
     private String iban;
     private Integer monthlyFeeCents;
+    private String role;
 
-    public User(Integer id, String name, String surname, String email, String iban, Integer monthlyFeeCents) {
-        this.id = id; this.name = name; this.surname = surname; this.email = email; this.iban = iban; this.monthlyFeeCents = monthlyFeeCents;
+    public User(Integer id, String name, String surname, String email, String iban, Integer monthlyFeeCents, String role) {
+        this.id = id; this.name = name; this.surname = surname; this.email = email; this.iban = iban; this.monthlyFeeCents = monthlyFeeCents; this.role = role;
     }
 
     public Integer getId()              { return id; }
@@ -29,6 +30,9 @@ public class User {
 
     public Integer getMonthlyFeeCents()         { return monthlyFeeCents; }
     public void setMonthlyFeeCents(Integer monthlyFeeCents) { this.monthlyFeeCents = monthlyFeeCents; }
+
+    public String getRole()            { return role; }
+    public void setRole(String role)  { this.role = role; }
 
     @Override public String toString() { return String.format("[%d] %s", getId(), name + " " + surname); }
 

@@ -60,10 +60,10 @@ public class MenuWindow extends JFrame {
         center.add(btnIncidents);
 
         btnReceipts = new JButton("Gestión de Recibos");
-        center.add(btnReceipts);
+        if (currentUser.getRole().equals("ADMIN")) center.add(btnReceipts);
 
         btnBatch= new JButton("Gestión de Lotes");
-        center.add(btnBatch);
+        if (currentUser.getRole().equals("ADMIN")) center.add(btnBatch);
 
         root.add(center, BorderLayout.CENTER);
 
