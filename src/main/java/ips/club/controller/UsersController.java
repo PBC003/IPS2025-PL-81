@@ -23,4 +23,8 @@ public class UsersController {
         String currentYearMonth = YearMonth.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
         return userService.findUsersWithoutReceiptFor(currentYearMonth);
     }
+
+    public User findById(int userId) {
+        return userService.findUserById(userId);
+    }
 }

@@ -19,6 +19,9 @@ public class IncidentDao {
 	private static final String SQL_FIND_ALL =
 		    "SELECT id, user_id, inc_code, description, created_at, status, location_id FROM Incident ORDER BY id";
 
+    private static final String SQL_FIND_BY_REPORTER = "SELECT * FROM Incident WHERE user_id = ? ORDER BY created_at DESC";
+
+
 	public Incident insert(Incident i) {
         Database db = new Database();
         try (Connection conn = db.getConnection();
@@ -80,5 +83,22 @@ public class IncidentDao {
         Integer locationId = (Integer) rs.getObject("location_id");
 
         return new Incident(id, userId, incCode, description, createdAt, status, locationId);
+    }
+
+    public List<Incident> findByReporter(int userId) {
+        List<Incident> result = new ArrayList<>();
+        Database db = new Database();
+        try (Connection c = db.getConnection();
+             PreparedStatement ps = c.prepareStatement(SQL_FIND_BY_REPORTER)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(map(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error cargando incidencias del usuario " + userId, e);
+        }
+        return result;
     }
 }

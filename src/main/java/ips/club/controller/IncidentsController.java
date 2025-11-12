@@ -30,4 +30,8 @@ public class IncidentsController {
     public List<Incident> loadIncident() {
         return incidentDao.findAll();
     }
+
+    public List<Incident> findAllByReporter(int userId) {
+        return service.findAllByReporter(userId);
+    }
 }

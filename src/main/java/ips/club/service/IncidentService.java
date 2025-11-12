@@ -1,6 +1,7 @@
 package ips.club.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import ips.club.dao.IncidentDao;
 import ips.club.model.Incident;
@@ -19,5 +20,9 @@ public class IncidentService {
         Incident inc = new Incident(null, userId, incCode,details, LocalDateTime.now(), locationId);
 
         return dao.insert(inc);
+    }
+
+    public List<Incident> findAllByReporter(int userId) {
+        return dao.findByReporter(userId);
     }
 }
