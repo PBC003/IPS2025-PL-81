@@ -33,6 +33,7 @@ public class User {
 
     public String getRole()            { return role; }
     public void setRole(String role)  { this.role = role; }
+    public boolean isAdmin() {return role.equals("ADMIN");}
 
     @Override public String toString() { return String.format("[%d] %s", getId(), name + " " + surname); }
 

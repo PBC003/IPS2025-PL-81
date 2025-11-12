@@ -5,6 +5,9 @@ import ips.club.model.User;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -59,7 +62,7 @@ public class LoginWindow extends JDialog {
         lstUsers.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
+                    boolean isSelected, boolean cellHasFocus) {
                 JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof User) {
                     User u = (User) value;
@@ -79,29 +82,49 @@ public class LoginWindow extends JDialog {
         root.add(south, BorderLayout.SOUTH);
 
         btnOk.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) { accept(); }
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                accept();
+            }
         });
         btnCancel.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 selected = null;
                 dispose();
             }
         });
-        lstUsers.addListSelectionListener(e -> btnOk.setEnabled(!lstUsers.isSelectionEmpty()));
+        lstUsers.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting())
+                    return;
+                btnOk.setEnabled(!lstUsers.isSelectionEmpty());
+            }
+        });
         lstUsers.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2 && !lstUsers.isSelectionEmpty()) accept();
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && !lstUsers.isSelectionEmpty())
+                    accept();
             }
         });
         txtSearch.addKeyListener(new KeyAdapter() {
-            @Override public void keyReleased(KeyEvent e) { filter(txtSearch.getText()); }
+            @Override
+            public void keyReleased(KeyEvent e) {
+                filter(txtSearch.getText());
+            }
         });
 
         getRootPane().registerKeyboardAction(
-                new ActionListener() { @Override public void actionPerformed(ActionEvent e) { btnCancel.doClick(); } },
+                new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        btnCancel.doClick();
+                    }
+                },
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         getRootPane().setDefaultButton(btnOk);
     }
@@ -120,7 +143,8 @@ public class LoginWindow extends JDialog {
 
     private void refreshList(List<User> users) {
         model.clear();
-        for (User u : users) model.addElement(u);
+        for (User u : users)
+            model.addElement(u);
         if (!model.isEmpty()) {
             lstUsers.setSelectedIndex(0);
             btnOk.setEnabled(true);
@@ -138,13 +162,15 @@ public class LoginWindow extends JDialog {
         List<User> filtered = new ArrayList<User>();
         for (User u : allUsers) {
             String target = (u.getName() + " " + u.getEmail()).toLowerCase();
-            if (target.contains(q)) filtered.add(u);
+            if (target.contains(q))
+                filtered.add(u);
         }
         refreshList(filtered);
     }
 
     private void accept() {
         selected = lstUsers.getSelectedValue();
-        if (selected != null) dispose();
+        if (selected != null)
+            dispose();
     }
 }

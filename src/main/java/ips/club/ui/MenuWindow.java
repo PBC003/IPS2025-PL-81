@@ -109,7 +109,7 @@ public class MenuWindow extends JFrame {
     }
 
     private void openIncidentsWindow() {
-        IncidentWindow w = new IncidentWindow(incidentsController, locationsController, currentUser );
+        IncidentWindow w = new IncidentWindow(incidentsController, locationsController, currentUser, usersController );
         w.setVisible(true);
     }
 

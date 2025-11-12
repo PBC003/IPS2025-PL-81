@@ -15,4 +15,8 @@ public class UserService {
     public List<User> findUsersWithoutReceiptFor(String currentYearMonth) {
         return userDao.findAllWithoutReceiptFor(currentYearMonth);
     }
+
+    public User findUserById(int userId) {
+        return userDao.findBasicById(userId);
+    }
 }
