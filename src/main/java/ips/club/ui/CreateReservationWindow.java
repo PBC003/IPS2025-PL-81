@@ -16,6 +16,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("serial")
 public class CreateReservationWindow extends JDialog {
     private final ReservationController controller;
     private final int userId;

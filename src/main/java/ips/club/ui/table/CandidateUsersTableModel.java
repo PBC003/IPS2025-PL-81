@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
+@SuppressWarnings("serial")
 public class CandidateUsersTableModel extends AbstractTableModel {
     private final String[] cols = { "Sel.", "ID", "Nombre", "Apellidos", "Cuota (cents)", "IBAN" };
     private final List<User> rows = new ArrayList<>();

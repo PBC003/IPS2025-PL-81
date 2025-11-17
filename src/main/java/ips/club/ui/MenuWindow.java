@@ -1,5 +1,6 @@
 package ips.club.ui;
 
+import ips.club.controller.AssemblyController;
 import ips.club.controller.IncidentsController;
 import ips.club.controller.LocationsController;
 import ips.club.controller.ReceiptBatchController;
@@ -24,6 +25,7 @@ public class MenuWindow extends JFrame {
     private final ReceiptBatchController receiptBatchController;
     private final UsersController usersController;
     private final ReservationController reservationController;
+    private final AssemblyController assemblyController;
 
     private JLabel lblUser;
     private JButton btnIncidents;
@@ -31,8 +33,9 @@ public class MenuWindow extends JFrame {
     private JButton btnExit;
     private JButton btnBatch;
     private JButton btnReservations;
+    private JButton btnAssemblies;
 
-    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController, ReceiptBatchController receiptBatchController, UsersController usersController, ReservationController reservationController) {
+    public MenuWindow(User currentUser,IncidentsController incidentsController, LocationsController locationsController, ReceiptsController receiptsController, ReceiptBatchController receiptBatchController, UsersController usersController, ReservationController reservationController, AssemblyController assemblyController) {
         super("Menú principal");
         this.currentUser = currentUser;
         this.incidentsController = incidentsController;
@@ -41,6 +44,7 @@ public class MenuWindow extends JFrame {
         this.usersController = usersController;
         this.receiptBatchController = receiptBatchController;
         this.reservationController = reservationController;
+        this.assemblyController = assemblyController;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initUI();
@@ -72,6 +76,9 @@ public class MenuWindow extends JFrame {
         btnBatch= new JButton("Gestión de Lotes");
         if (currentUser.getRole().equals("ADMIN")) center.add(btnBatch);
 
+        btnAssemblies = new JButton("Gestión de Asambleas");
+        if (currentUser.getRole().equals("ADMIN")) center.add(btnAssemblies);
+
         root.add(center, BorderLayout.CENTER);
 
         JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -82,6 +89,12 @@ public class MenuWindow extends JFrame {
         btnIncidents.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 openIncidentsWindow();
+            }
+        });
+
+        btnAssemblies.addActionListener(new ActionListener() {
+            @Override public void actionPerformed(ActionEvent e) {
+                openAssembliesWindow();
             }
         });
 
@@ -123,6 +136,10 @@ public class MenuWindow extends JFrame {
     }
     private void openReservationsWindow() {
         ReservationListWindow w = new ReservationListWindow(reservationController, currentUser.getId());
+        w.setVisible(true);
+    }
+    private void openAssembliesWindow() {
+        AssembliesListWindow w = new AssembliesListWindow(assemblyController);
         w.setVisible(true);
     }
 }

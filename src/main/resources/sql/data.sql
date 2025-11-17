@@ -86,3 +86,9 @@ INSERT INTO Reservation (user_id, location_id, start_time, end_time, minutes, cr
   (8, 7, '2025-11-13T10:15:00', '2025-11-13T11:15:00', 60, '2025-11-04T15:00:00'),
   (9, 8, '2025-11-13T13:45:00', '2025-11-13T14:30:00', 120, '2025-11-04T16:00:00'),
   (10,9, '2025-11-14T09:30:00', '2025-11-14T10:30:00', 60, '2025-11-05T17:00:00');
+
+-- ASSEMBLY
+INSERT INTO Assembly (title, description, scheduled_at, created_at, type, status, minutes_text) VALUES
+  ('Asamblea Ordinaria Q1', 'Presupuestos y cuotas 2026', '2026-01-15T19:00:00', '2025-11-12T10:00:00', 'ORDINARY', 'SCHEDULED', NULL),
+  ('Asamblea Extraordinaria', 'Reforma estatutos','2025-09-20T18:00:00', '2025-08-30T12:00:00', 'EXTRAORDINARY', 'FINISHED', 'Acta: Se aprueba por mayoría.'),
+  ('Asamblea Ordinaria Q2', 'Elección de nuevos miembros', '2027-04-20T19:00:00', '2026-02-15T11:00:00', 'ORDINARY', 'WAITING', 'Acta: Pendiente de aprobación.');
