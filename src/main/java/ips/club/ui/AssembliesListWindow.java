@@ -3,6 +3,7 @@ package ips.club.ui;
 import ips.club.controller.AssemblyController;
 import ips.club.model.Assembly;
 import ips.club.model.AssemblyStatus;
+import ips.club.model.MinutesStatus;
 import ips.club.ui.table.AssembliesTableModel;
 
 import javax.swing.*;
@@ -17,6 +18,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
 @SuppressWarnings("serial")
 public class AssembliesListWindow extends JFrame {
 
@@ -26,6 +32,11 @@ public class AssembliesListWindow extends JFrame {
     private final JTextField tfFrom;
     private final JTextField tfTo;
     private final JButton btnSearch;
+
+    private final AssembliesTableModel model;
+    private final JTable table;
+    private final TableRowSorter<AssembliesTableModel> sorter;
+
     private final JButton btnCreate;
     private final JButton btnAttachMinutes;
     private final JButton btnApprove;
@@ -33,9 +44,6 @@ public class AssembliesListWindow extends JFrame {
     private final JButton btnRefresh;
     private final JButton btnClose;
 
-    private final JTable table;
-    private final AssembliesTableModel model;
-    private final TableRowSorter<AssembliesTableModel> sorter;
     private boolean suppressFilterEvents = false;
 
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -51,9 +59,8 @@ public class AssembliesListWindow extends JFrame {
 
         cbStatus = new JComboBox<Object>(new Object[] {
                 "Todas",
-                AssemblyStatus.SCHEDULED,
-                AssemblyStatus.WAITING,
-                AssemblyStatus.FINISHED
+                AssemblyStatus.NOT_HELD,
+                AssemblyStatus.HELD,
         });
         tfFrom = new JTextField(16);
         tfTo = new JTextField(16);
@@ -88,8 +95,8 @@ public class AssembliesListWindow extends JFrame {
 
         JPanel pnlActions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnCreate = new JButton("Crear");
-        btnAttachMinutes = new JButton("Crear acta → WAITING");
-        btnApprove = new JButton("Aprobar acta → FINISHED");
+        btnAttachMinutes = new JButton("Subir acta");
+        btnApprove = new JButton("Aprobar acta");
         btnDetails = new JButton("Detalle");
         btnRefresh = new JButton("Recargar");
         btnClose = new JButton("Cerrar");
@@ -101,11 +108,24 @@ public class AssembliesListWindow extends JFrame {
         pnlActions.add(btnRefresh);
         pnlActions.add(btnClose);
 
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(8, 8));
         add(pnlFilters, BorderLayout.NORTH);
         add(scroll, BorderLayout.CENTER);
         add(pnlActions, BorderLayout.SOUTH);
 
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setSize(900, 500);
+        setLocationRelativeTo(null);
+
+        reloadAll();
+
+        cbStatus.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!suppressFilterEvents)
+                    reloadWithFilters();
+            }
+        });
         btnSearch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -156,21 +176,6 @@ public class AssembliesListWindow extends JFrame {
                     updateButtonsEnabled();
             }
         });
-        cbStatus.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (suppressFilterEvents)
-                    return;
-                reloadWithFilters();
-            }
-        });
-
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(980, 520);
-        setLocationRelativeTo(null);
-
-        reloadAll();
-        updateButtonsEnabled();
     }
 
     private void reloadAll() {
@@ -230,10 +235,10 @@ public class AssembliesListWindow extends JFrame {
         btnAttachMinutes.setEnabled(false);
         btnApprove.setEnabled(false);
 
-        if (has && a.getStatus() != null) {
-            if (a.getStatus() == AssemblyStatus.SCHEDULED) {
+        if (has && a.getMinutesStatus() != null) {
+            if (a.getMinutesStatus() == MinutesStatus.PENDING_UPLOAD) {
                 btnAttachMinutes.setEnabled(true);
-            } else if (a.getStatus() == AssemblyStatus.WAITING) {
+            } else if (a.getMinutesStatus() == MinutesStatus.UPLOADED) {
                 btnApprove.setEnabled(true);
             }
         }
@@ -248,7 +253,7 @@ public class AssembliesListWindow extends JFrame {
             table.clearSelection();
             table.revalidate();
             table.repaint();
-            JOptionPane.showMessageDialog(this, "Asamblea creada (SCHULED).", "OK", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Asamblea creada.", "OK", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -257,16 +262,50 @@ public class AssembliesListWindow extends JFrame {
         if (a == null)
             return;
 
-        AssemblyMinutesEditorWindow dlg = new AssemblyMinutesEditorWindow(this, controller, a.getId());
-        dlg.setVisible(true);
-        Assembly updated = dlg.getUpdated();
+        JFileChooser chooser = new JFileChooser();
+        int res = chooser.showOpenDialog(this);
+        if (res != JFileChooser.APPROVE_OPTION)
+            return;
+
+        File file = chooser.getSelectedFile();
+        if (file == null || !file.isFile())
+            return;
+
+        File uploadsDir = new File("uploads/assemblies");
+        if (!uploadsDir.exists() && !uploadsDir.mkdirs()) {
+            JOptionPane.showMessageDialog(this, "No se pudo crear la carpeta de subida.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String originalName = file.getName();
+        String ext = "";
+        int dot = originalName.lastIndexOf('.');
+        if (dot != -1) {
+            ext = originalName.substring(dot);
+        }
+        String newName = "assembly_" + a.getId() + "_" + System.currentTimeMillis() + ext;
+        File dest = new File(uploadsDir, newName);
+
+        try {
+            Files.copy(file.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error al copiar el archivo:\n" + ex.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Assembly updated = controller.attachMinutesAndMarkWaiting(a.getId(), dest.getPath());
         if (updated != null) {
             reloadWithFilters();
             table.clearSelection();
             table.revalidate();
             table.repaint();
-            JOptionPane.showMessageDialog(this, "Acta creada y asamblea marcada WAITING.", "OK",
+            JOptionPane.showMessageDialog(this, "Acta subida y asamblea marcada realizada.", "OK",
                     JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "No se pudo subir el acta.", "Aviso",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -275,7 +314,7 @@ public class AssembliesListWindow extends JFrame {
         if (a == null)
             return;
         int res = JOptionPane.showConfirmDialog(this,
-                "¿Aprobar el acta y marcar FINISHED?",
+                "¿Aprobar el acta?",
                 "Confirmar", JOptionPane.YES_NO_OPTION);
         if (res != JOptionPane.YES_OPTION)
             return;
@@ -286,7 +325,7 @@ public class AssembliesListWindow extends JFrame {
             table.clearSelection();
             table.revalidate();
             table.repaint();
-            JOptionPane.showMessageDialog(this, "Asamblea marcada FINISHED.", "OK", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Acta aprobada.", "OK", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this, "No se pudo actualizar la asamblea.", "Aviso",
                     JOptionPane.WARNING_MESSAGE);

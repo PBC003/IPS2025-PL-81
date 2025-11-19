@@ -81,14 +81,15 @@ CREATE TABLE IF NOT EXISTS Reservation (
 );
 
 CREATE TABLE IF NOT EXISTS Assembly (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  title         TEXT    NOT NULL,
-  description   TEXT,
-  scheduled_at  TEXT    NOT NULL,
-  created_at    TEXT    NOT NULL,
-  status        TEXT    NOT NULL DEFAULT 'SCHEDULED' CHECK (status IN ('SCHEDULED','WAITING','FINISHED')),
-  type          TEXT    NOT NULL CHECK (type IN ('ORDINARY','EXTRAORDINARY')),
-  minutes_text  TEXT
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  title          TEXT    NOT NULL,
+  description    TEXT,
+  scheduled_at   TEXT    NOT NULL,
+  created_at     TEXT    NOT NULL,
+  status        TEXT    NOT NULL DEFAULT 'NOT_HELD' CHECK (status IN ('NOT_HELD','HELD')),
+  type           TEXT    NOT NULL CHECK (type IN ('ORDINARY','EXTRAORDINARY')),
+  minutes_text   TEXT,
+  minutes_status TEXT    NOT NULL DEFAULT 'PENDING_UPLOAD' CHECK (minutes_status IN ('PENDING_UPLOAD','UPLOADED','APPROVED'))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_receipt_per_month

@@ -3,6 +3,7 @@ package ips.club.dao;
 import ips.club.model.Assembly;
 import ips.club.model.AssemblyStatus;
 import ips.club.model.AssemblyType;
+import ips.club.model.MinutesStatus;
 import ips.util.ApplicationException;
 import ips.util.Database;
 
@@ -15,25 +16,25 @@ import java.util.List;
 public class AssemblyDao {
 
     private static final String SQL_INSERT =
-        "INSERT INTO Assembly (title, description, scheduled_at, created_at, status, type, minutes_text) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO Assembly (title, description, scheduled_at, created_at, status, type, minutes_text, minutes_status) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String SQL_UPDATE_MINUTES_WAITING =
-        "UPDATE Assembly SET minutes_text = ?, status = 'WAITING' WHERE id = ?";
+        "UPDATE Assembly SET minutes_text = ?, minutes_status = 'UPLOADED', status = 'HELD' WHERE id = ?";
 
     private static final String SQL_MARK_FINISHED =
-        "UPDATE Assembly SET status = 'FINISHED' WHERE id = ?";
+        "UPDATE Assembly SET minutes_status = 'APPROVED' WHERE id = ?";
 
     private static final String SQL_FIND_BY_ID =
-        "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text " +
+        "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text, minutes_status " +
         "FROM Assembly WHERE id = ?";
 
     private static final String SQL_FIND_ALL =
-        "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text " +
+        "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text, minutes_status " +
         "FROM Assembly ORDER BY scheduled_at DESC";
 
     private static final String SQL_FIND_BY_STATUS =
-        "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text " +
+        "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text, minutes_status " +
         "FROM Assembly WHERE status = ? ORDER BY scheduled_at DESC";
 
     private static final String SQL_EXISTS_ORDINARY_YEAR =
@@ -58,13 +59,14 @@ public class AssemblyDao {
         AssemblyStatus status = AssemblyStatus.fromDb(rs.getString("status"));
         AssemblyType type = AssemblyType.fromDb(rs.getString("type"));
         String minutes = rs.getString("minutes_text");
-        return new Assembly(id, title, description, scheduledAt, createdAt, status, type, minutes);
+        MinutesStatus minutesStatus = MinutesStatus.fromDb(rs.getString("minutes_status"));
+        return new Assembly(id, title, description, scheduledAt, createdAt, status, type, minutes, minutesStatus);
     }
 
     public Assembly insert(Assembly a) {
         Database db = new Database();
         try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+            PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, a.getTitle());
             ps.setString(2, a.getDescription());
@@ -73,6 +75,7 @@ public class AssemblyDao {
             ps.setString(5, a.getStatus().toDb());
             ps.setString(6, a.getType().toDb());
             ps.setString(7, a.getMinutesText());
+            ps.setString(8, a.getMinutesStatus().toDb());
 
             int rows = ps.executeUpdate();
             if (rows != 1) throw new ApplicationException("No se insertó la asamblea");
@@ -164,7 +167,7 @@ public class AssemblyDao {
 
     public List<Assembly> findFiltered(AssemblyStatus status, LocalDateTime from, LocalDateTime to) {
         StringBuilder sb = new StringBuilder(
-            "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text FROM Assembly WHERE 1=1"
+            "SELECT id, title, description, scheduled_at, created_at, status, type, minutes_text, minutes_status FROM Assembly WHERE 1=1"
         );
         ArrayList<Object> params = new ArrayList<>();
 

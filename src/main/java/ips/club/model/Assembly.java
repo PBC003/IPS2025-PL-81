@@ -11,6 +11,27 @@ public class Assembly {
     private AssemblyStatus status;
     private AssemblyType type;
     private String minutesText;
+    private MinutesStatus minutesStatus;
+
+    public Assembly(Integer id,
+                    String title,
+                    String description,
+                    LocalDateTime scheduledAt,
+                    LocalDateTime createdAt,
+                    AssemblyStatus status,
+                    AssemblyType type,
+                    String minutesText,
+                    MinutesStatus minutesStatus) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.scheduledAt = scheduledAt;
+        this.createdAt = createdAt;
+        this.status = status == null ? AssemblyStatus.NOT_HELD : status;
+        this.type = type == null ? AssemblyType.ORDINARY : type;
+        this.minutesText = minutesText;
+        this.minutesStatus = minutesStatus == null ? MinutesStatus.PENDING_UPLOAD : minutesStatus;
+    }
 
     public Assembly(Integer id,
                     String title,
@@ -20,14 +41,7 @@ public class Assembly {
                     AssemblyStatus status,
                     AssemblyType type,
                     String minutesText) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.scheduledAt = scheduledAt;
-        this.createdAt = createdAt;
-        this.status = status == null ? AssemblyStatus.SCHEDULED : status;
-        this.type = type == null ? AssemblyType.ORDINARY : type;
-        this.minutesText = minutesText;
+        this(id, title, description, scheduledAt, createdAt, status, type, minutesText, MinutesStatus.PENDING_UPLOAD);
     }
 
     public Integer getId() { return id; }
@@ -54,8 +68,11 @@ public class Assembly {
     public String getMinutesText() { return minutesText; }
     public void setMinutesText(String minutesText) { this.minutesText = minutesText; }
 
+    public MinutesStatus getMinutesStatus() { return minutesStatus; }
+    public void setMinutesStatus(MinutesStatus minutesStatus) { this.minutesStatus = minutesStatus; }
+
     @Override
     public String toString() {
-        return "Assembly{id=" + id + ", title=" + title + ", status=" + status + ", type=" + type + "}";
+        return "Assembly{id=" + id + ", title=" + title + ", status=" + status + ", type=" + type + ", minutesStatus=" + minutesStatus + "}";
     }
 }
