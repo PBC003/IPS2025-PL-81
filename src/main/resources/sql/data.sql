@@ -86,3 +86,13 @@ INSERT INTO Reservation (user_id, location_id, start_time, end_time, minutes, cr
   (8, 7, '2025-11-13T10:15:00', '2025-11-13T11:15:00', 60, '2025-11-04T15:00:00'),
   (9, 8, '2025-11-13T13:45:00', '2025-11-13T14:30:00', 120, '2025-11-04T16:00:00'),
   (10,9, '2025-11-14T09:30:00', '2025-11-14T10:30:00', 60, '2025-11-05T17:00:00');
+
+-- ASSEMBLY
+INSERT INTO Assembly (title, description, scheduled_at, created_at, type, status, minutes_text, minutes_status) VALUES
+  ('Asamblea Ordinaria 2024', 'Cierre del ejercicio 2023', '2024-02-15T19:00:00', '2024-01-10T10:00:00', 'ORDINARY', 'HELD', '/ficheros/actas/asamblea_ordinaria_2024.pdf', 'APPROVED'),
+  ('Asamblea Extraordinaria 2024', 'Reforma parcial de estatutos', '2024-07-01T19:00:00', '2024-06-10T10:00:00', 'EXTRAORDINARY', 'HELD', '/ficheros/actas/asamblea_extra_2024.pdf', 'UPLOADED'),
+  ('Asamblea Ordinaria 2025', 'Presupuestos y cuotas 2025', '2025-03-10T19:00:00', '2025-02-01T10:00:00', 'ORDINARY', 'HELD', '/ficheros/actas/asamblea_ordinaria_2025.pdf', 'APPROVED'),
+  ('Asamblea Extraordinaria 2025', 'Cambio de junta directiva', '2025-09-20T18:00:00', '2025-09-01T10:00:00', 'EXTRAORDINARY', 'HELD', '/ficheros/actas/asamblea_extra_2025.pdf', 'UPLOADED'),
+  ('Asamblea Ordinaria 2026', 'Presupuestos y cuotas 2026', '2026-03-15T19:00:00', '2026-01-10T10:00:00', 'ORDINARY', 'NOT_HELD', NULL, 'PENDING_UPLOAD'),
+  ('Asamblea Extraordinaria 2026', 'Aprobación de cuotas especiales', '2026-06-01T19:00:00', '2026-05-10T10:00:00', 'EXTRAORDINARY', 'NOT_HELD', NULL, 'PENDING_UPLOAD');
+

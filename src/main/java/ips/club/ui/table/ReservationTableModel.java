@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Collections;
 
+@SuppressWarnings("serial")
 public class ReservationTableModel extends AbstractTableModel {
     private final String[] cols = {"ID", "UserId", "Instalación", "Inicio", "Fin", "Min"};
     private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");

@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Receipt;
 DROP TABLE IF EXISTS Receipt_batch;
 DROP TABLE IF EXISTS Reservation;
+DROP TABLE IF EXISTS Assembly;
 
 
 CREATE TABLE IF NOT EXISTS Users (
@@ -79,10 +80,22 @@ CREATE TABLE IF NOT EXISTS Reservation (
   FOREIGN KEY(location_id) REFERENCES Location(id)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS receipt_per_month
+CREATE TABLE IF NOT EXISTS Assembly (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  title          TEXT    NOT NULL,
+  description    TEXT,
+  scheduled_at   TEXT    NOT NULL,
+  created_at     TEXT    NOT NULL,
+  status        TEXT    NOT NULL DEFAULT 'NOT_HELD' CHECK (status IN ('NOT_HELD','HELD')),
+  type           TEXT    NOT NULL CHECK (type IN ('ORDINARY','EXTRAORDINARY')),
+  minutes_text   TEXT,
+  minutes_status TEXT    NOT NULL DEFAULT 'PENDING_UPLOAD' CHECK (minutes_status IN ('PENDING_UPLOAD','UPLOADED','APPROVED'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_receipt_per_month
   ON Receipt(user_id, charge_month);
 
-CREATE INDEX IF NOT EXISTS receipt_per_batch
+CREATE INDEX IF NOT EXISTS idx_receipt_per_batch
   ON Receipt(batch_id);
 
 CREATE INDEX IF NOT EXISTS idx_res_by_location_time
@@ -90,3 +103,13 @@ CREATE INDEX IF NOT EXISTS idx_res_by_location_time
 
 CREATE INDEX IF NOT EXISTS idx_res_by_user_time
   ON Reservation(user_id,    start_time, end_time);
+
+CREATE INDEX IF NOT EXISTS idx_assembly_by_status_time
+  ON Assembly(status, scheduled_at);
+
+CREATE INDEX IF NOT EXISTS idx_assembly_by_time
+  ON Assembly(scheduled_at);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_assembly_ordinary_per_year
+  ON Assembly(substr(scheduled_at,1,4))
+  WHERE type='ORDINARY';
