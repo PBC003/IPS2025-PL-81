@@ -5,14 +5,17 @@ import ips.club.model.Location;
 import ips.club.model.Reservation;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+
+import org.jdesktop.swingx.JXDatePicker;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.time.*;
-import java.util.Calendar;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 
@@ -21,13 +24,20 @@ public class CreateReservationWindow extends JDialog {
     private final ReservationController controller;
     private final int userId;
 
-    private JComboBox<LocationItem> cbLocation = new JComboBox<>();
-    private JSpinner spDay = new JSpinner();
-    private JComboBox<Integer> cbMinutes = new JComboBox<>(new Integer[] { 60, 120 });
+    private JComboBox<Location> cbLocation = new JComboBox<>();
+    private JXDatePicker dpDay = new JXDatePicker();
     private JComboBox<LocalTime> cbHour = new JComboBox<>();
     private JButton btnCreate = new JButton("Reservar");
     private JButton btnCancel = new JButton("Cancelar");
     private JLabel lblHint = new JLabel("Elige instalación, día y duración para ver horas libres");
+
+    private JToggleButton btn60 = new JToggleButton("60 minutos");
+    private JToggleButton btn120 = new JToggleButton("120 minutos");
+
+    private final ZoneId zone = ZoneId.systemDefault();
+    private LocalDate minDate;
+    private LocalDate maxDate;
+    private LocalDate lastValidDay;
 
     public CreateReservationWindow(ReservationController controller, int userId) {
         super(null, "Nueva reserva", ModalityType.APPLICATION_MODAL);
@@ -43,12 +53,13 @@ public class CreateReservationWindow extends JDialog {
 
     private void initUI() {
         cbLocation = new JComboBox<>();
-        spDay = new JSpinner();
-        cbMinutes = new JComboBox<>(new Integer[] { 60, 120 });
+        dpDay = new JXDatePicker();
         cbHour = new JComboBox<>();
         btnCreate = new JButton("Reservar");
         btnCancel = new JButton("Cancelar");
         lblHint = new JLabel("Elige instalación, día y duración para ver horas libres");
+        btn60 = new JToggleButton("60 minutos");
+        btn120 = new JToggleButton("120 minutos");
 
         JPanel form = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
@@ -65,13 +76,13 @@ public class CreateReservationWindow extends JDialog {
         c.gridx = 0;
         form.add(new JLabel("Día:"), c);
         c.gridx = 1;
-        form.add(spDay, c);
+        form.add(dpDay, c);
 
         c.gridy++;
         c.gridx = 0;
-        form.add(new JLabel("Duración (min):"), c);
+        form.add(new JLabel("Duración:"), c);
         c.gridx = 1;
-        form.add(cbMinutes, c);
+        form.add(createMinutesPanel(), c);
 
         c.gridy++;
         c.gridx = 0;
@@ -90,8 +101,9 @@ public class CreateReservationWindow extends JDialog {
         add(south, BorderLayout.SOUTH);
 
         loadLocations();
-        setupDaySpinner();
-        cbMinutes.setSelectedItem(60);
+        setupDayPicker();
+        setupMinutesButtons();
+
         cbHour.setEnabled(false);
         btnCreate.setEnabled(false);
 
@@ -102,17 +114,24 @@ public class CreateReservationWindow extends JDialog {
             }
         });
 
-        cbMinutes.addActionListener(new ActionListener() {
+        dpDay.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onDayChanged();
+            }
+        });
+
+        btn60.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 updateAvailableHours();
             }
         });
 
-        spDay.addChangeListener(new ChangeListener() {
+        btn120.addActionListener(new ActionListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
-                onDayChanged(e);
+            public void actionPerformed(ActionEvent e) {
+                updateAvailableHours();
             }
         });
 
@@ -129,68 +148,109 @@ public class CreateReservationWindow extends JDialog {
                 onCreate(e);
             }
         });
-
     }
 
-    private void onDayChanged(ChangeEvent e) {
-        updateAvailableHours();
+    private JPanel createMinutesPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        ButtonGroup group = new ButtonGroup();
+        group.add(btn60);
+        group.add(btn120);
+        panel.add(btn60);
+        panel.add(btn120);
+        return panel;
+    }
+
+    private void setupMinutesButtons() {
+        btn60.setSelected(true);
+    }
+
+    private Integer getSelectedMinutes() {
+        if (btn60.isSelected()) return 60;
+        if (btn120.isSelected()) return 120;
+        return null;
     }
 
     private void loadLocations() {
         cbLocation.removeAllItems();
         List<Location> locs = controller.findAllLocations();
         for (Location l : locs) {
-            cbLocation.addItem(new LocationItem(l.getId(), l.getName()));
+            cbLocation.addItem(new Location(l.getId(), l.getName()));
         }
-        if (cbLocation.getItemCount() > 0)
+        if (cbLocation.getItemCount() > 0) {
             cbLocation.setSelectedIndex(0);
+        }
     }
 
-    private void setupDaySpinner() {
-        ZoneId zone = ZoneId.systemDefault();
-        LocalDate today = LocalDate.now();
-        LocalDate last = LocalDateTime.now().plusHours(72).toLocalDate();
+    private void setupDayPicker() {
+        minDate = LocalDate.now();
+        maxDate = LocalDateTime.now().plusHours(72).toLocalDate();
+        lastValidDay = minDate;
 
-        Date initial = Date.from(today.atStartOfDay(zone).toInstant());
-        Date min = Date.from(today.atStartOfDay(zone).toInstant());
-        Date max = Date.from(last.atTime(LocalTime.of(23, 59)).atZone(zone).toInstant());
+        Date initial = Date.from(minDate.atStartOfDay(zone).toInstant());
+        Date min = Date.from(minDate.atStartOfDay(zone).toInstant());
+        Date max = Date.from(maxDate.atTime(LocalTime.of(23, 59)).atZone(zone).toInstant());
 
-        SpinnerDateModel model = new SpinnerDateModel(initial, min, max, Calendar.DAY_OF_MONTH);
-        spDay.setModel(model);
-        JSpinner.DateEditor editor = new JSpinner.DateEditor(spDay, "yyyy-MM-dd");
-        spDay.setEditor(editor);
+        dpDay.setDate(initial);
+        dpDay.getMonthView().setLowerBound(min);
+        dpDay.getMonthView().setUpperBound(max);
+    }
+
+    private void onDayChanged() {
+        Date selected = dpDay.getDate();
+        if (selected == null) {
+            restoreLastValidDay();
+            return;
+        }
+        LocalDate day = Instant.ofEpochMilli(selected.getTime()).atZone(zone).toLocalDate();
+        if (day.isBefore(minDate) || day.isAfter(maxDate)) {
+            JOptionPane.showMessageDialog(this, "La fecha seleccionada no es válida.", "Fecha no válida", JOptionPane.WARNING_MESSAGE);
+            restoreLastValidDay();
+            return;
+        }
+        lastValidDay = day;
+        updateAvailableHours();
+    }
+
+    private void restoreLastValidDay() {
+        if (lastValidDay != null) {
+            Date d = Date.from(lastValidDay.atStartOfDay(zone).toInstant());
+            dpDay.setDate(d);
+        }
+    }
+
+    private LocalDate getSelectedDay() {
+        Date d = dpDay.getDate();
+        if (d == null && lastValidDay != null) {return lastValidDay;}
+        if (d == null) {return null;}
+        return Instant.ofEpochMilli(d.getTime()).atZone(zone).toLocalDate();
     }
 
     private void updateAvailableHours() {
-        LocationItem li = (LocationItem) cbLocation.getSelectedItem();
-        Integer minutes = (Integer) cbMinutes.getSelectedItem();
-        if (li == null || minutes == null) {
+        Location li = (Location) cbLocation.getSelectedItem();
+        Integer minutes = getSelectedMinutes();
+        LocalDate day = getSelectedDay();
+        if (li == null || minutes == null || day == null) {
             cbHour.removeAllItems();
             cbHour.setEnabled(false);
             btnCreate.setEnabled(false);
             return;
         }
 
-        LocalDate day = getSelectedDay();
-        List<LocalTime> hours = controller.computeAvailableStartHours(this.userId, li.id, day, minutes);
+        List<LocalTime> hours = controller.computeAvailableStartHours(this.userId, li.getId(), day, minutes);
 
         cbHour.removeAllItems();
-        for (LocalTime h : hours)
+        for (LocalTime h : hours) {
             cbHour.addItem(h);
+        }
 
         boolean has = cbHour.getItemCount() > 0;
         cbHour.setEnabled(has);
         btnCreate.setEnabled(has);
     }
 
-    private LocalDate getSelectedDay() {
-        Date d = (Date) spDay.getValue();
-        return Instant.ofEpochMilli(d.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-    }
-
     private void onCreate(ActionEvent e) {
-        LocationItem li = (LocationItem) cbLocation.getSelectedItem();
-        Integer minutes = (Integer) cbMinutes.getSelectedItem();
+        Location li = (Location) cbLocation.getSelectedItem();
+        Integer minutes = getSelectedMinutes();
         LocalTime hour = (LocalTime) cbHour.getSelectedItem();
 
         if (li == null || minutes == null || hour == null) {
@@ -199,35 +259,19 @@ public class CreateReservationWindow extends JDialog {
         }
 
         LocalDate day = getSelectedDay();
+        if (day == null) {
+            JOptionPane.showMessageDialog(this, "La fecha seleccionada no es válida.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         try {
-            Reservation r = controller.createReservation(
-                    this.userId, li.id, day, hour, minutes);
-            JOptionPane.showMessageDialog(this,
-                    "Reserva creada (ID " + r.getId() + ").",
-                    "OK", JOptionPane.INFORMATION_MESSAGE);
+            Reservation r = controller.createReservation(this.userId, li.getId(), day, hour, minutes);
+            JOptionPane.showMessageDialog(this, "Reserva creada (ID " + r.getId() + ").", "OK", JOptionPane.INFORMATION_MESSAGE);
             dispose();
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo crear", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error inesperado: " + ex.getMessage(), "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error inesperado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    private static class LocationItem {
-        final int id;
-        final String label;
-
-        LocationItem(int id, String label) {
-            this.id = id;
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
-    }
-
 }
