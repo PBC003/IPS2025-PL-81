@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -42,22 +43,65 @@ public class AssemblyDetailWindow extends JDialog {
         descPanel.add(new JScrollPane(
                 taDesc,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-        ), BorderLayout.CENTER);
-
-        JTextArea taMinutes = new JTextArea(14, 60);
-        taMinutes.setText(safe(a.getMinutesText()));
-        taMinutes.setEditable(false);
-        taMinutes.setLineWrap(true);
-        taMinutes.setWrapStyleWord(true);
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
         JPanel minutesPanel = new JPanel(new BorderLayout(4, 4));
         minutesPanel.add(new JLabel("Acta:"), BorderLayout.NORTH);
-        minutesPanel.add(new JScrollPane(
-                taMinutes,
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-        ), BorderLayout.CENTER);
+
+        String minutes = safe(a.getMinutesText());
+        if (minutes.isEmpty()) {
+            JTextArea taMinutes = new JTextArea(6, 60);
+            taMinutes.setText("No hay acta registrada.");
+            taMinutes.setEditable(false);
+            taMinutes.setLineWrap(true);
+            taMinutes.setWrapStyleWord(true);
+            minutesPanel.add(new JScrollPane(
+                    taMinutes,
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        } else {
+            File file = new File(minutes);
+            if (file.exists() && file.isFile()) {
+                JLabel lblName = new JLabel("Acta registrada: " + file.getName());
+                JButton btnOpen = new JButton("Abrir acta");
+                btnOpen.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (!Desktop.isDesktopSupported()) {
+                            JOptionPane.showMessageDialog(
+                                    AssemblyDetailWindow.this,
+                                    "No se puede abrir el archivo en este sistema.",
+                                    "Aviso",
+                                    JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+                        try {
+                            Desktop.getDesktop().open(file);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(
+                                    AssemblyDetailWindow.this,
+                                    "No se pudo abrir el archivo:\n" + ex.getMessage(),
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                });
+                JPanel filePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+                filePanel.add(lblName);
+                filePanel.add(btnOpen);
+                minutesPanel.add(filePanel, BorderLayout.CENTER);
+            } else {
+                JTextArea taMinutes = new JTextArea(14, 60);
+                taMinutes.setText(minutes);
+                taMinutes.setEditable(false);
+                taMinutes.setLineWrap(true);
+                taMinutes.setWrapStyleWord(true);
+                minutesPanel.add(new JScrollPane(
+                        taMinutes,
+                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+            }
+        }
 
         final JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, descPanel, minutesPanel);
         split.setResizeWeight(0.35);
@@ -69,7 +113,10 @@ public class AssemblyDetailWindow extends JDialog {
         actions.add(btnClose);
 
         btnClose.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) { dispose(); }
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
         });
 
         JPanel northWrap = new JPanel(new BorderLayout());
@@ -85,7 +132,8 @@ public class AssemblyDetailWindow extends JDialog {
         setLocationRelativeTo(owner);
 
         SwingUtilities.invokeLater(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 split.setDividerLocation(0.35);
             }
         });
@@ -93,21 +141,31 @@ public class AssemblyDetailWindow extends JDialog {
 
     private static void addRow(JPanel panel, GridBagConstraints gc, int row, String label, String value) {
         GridBagConstraints l = (GridBagConstraints) gc.clone();
-        l.gridx = 0; l.gridy = row; l.weightx = 0; l.fill = GridBagConstraints.NONE;
+        l.gridx = 0;
+        l.gridy = row;
+        l.weightx = 0;
+        l.fill = GridBagConstraints.NONE;
         panel.add(new JLabel(label), l);
 
         GridBagConstraints v = (GridBagConstraints) gc.clone();
-        v.gridx = 1; v.gridy = row; v.weightx = 1; v.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(new JTextField(value) {{
-            setEditable(false);
-            setBorder(BorderFactory.createEmptyBorder());
-            setOpaque(false);
-        }}, v);
+        v.gridx = 1;
+        v.gridy = row;
+        v.weightx = 1;
+        v.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(new JTextField(value) {
+            {
+                setEditable(false);
+                setBorder(BorderFactory.createEmptyBorder());
+                setOpaque(false);
+            }
+        }, v);
     }
 
     private static String fmt(LocalDateTime dt) {
         return dt == null ? "" : dt.withNano(0).format(DF);
     }
 
-    private static String safe(String s) { return s == null ? "" : s; }
+    private static String safe(String s) {
+        return s == null ? "" : s;
+    }
 }
