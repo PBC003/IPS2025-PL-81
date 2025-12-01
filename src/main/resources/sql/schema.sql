@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS Receipt (
   value_date      TEXT NOT NULL,
   charge_month    TEXT NOT NULL,
   concept         TEXT NOT NULL,
-  status          TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED','PAID','CANCELED')),
+  status          TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED','PAID','CANCELED','REISSUED')),
   batch_id        INTEGER,
   FOREIGN KEY(batch_id) REFERENCES Receipt_batch(id),
   FOREIGN KEY(user_id) REFERENCES Users(id)
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS Receipt_batch (
   charge_month  TEXT NOT NULL,
   bank_entity   TEXT NOT NULL,
   created_at    TEXT NOT NULL,
-  status        TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED','EXPORTED','CANCELED')),
+  status          TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED','EXPORTED','PROCESSED','CANCELED')),
   file_name     TEXT NOT NULL,
   total_amount  INTEGER NOT NULL DEFAULT 0,
   receipts_cnt  INTEGER NOT NULL DEFAULT 0
@@ -93,7 +93,8 @@ CREATE TABLE IF NOT EXISTS Assembly (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_receipt_per_month
-  ON Receipt(user_id, charge_month);
+  ON Receipt(user_id, charge_month)
+  WHERE status <> 'REISSUED';
 
 CREATE INDEX IF NOT EXISTS idx_receipt_per_batch
   ON Receipt(batch_id);

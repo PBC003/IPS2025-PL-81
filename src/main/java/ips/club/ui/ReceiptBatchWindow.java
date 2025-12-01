@@ -17,22 +17,25 @@ import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-
 @SuppressWarnings("serial")
 public class ReceiptBatchWindow extends JFrame {
 
     private final ReceiptBatchController controller;
 
     private final DefaultTableModel model = new DefaultTableModel(
-            new Object[]{"ID", "Mes", "Entidad", "Estado", "Fichero", "Total (cts)", "Recibos", "Creado"}, 0) {
-        @Override public boolean isCellEditable(int r, int c) { return false; }
+            new Object[] { "ID", "Mes", "Entidad", "Estado", "Fichero", "Total (cts)", "Recibos", "Creado" }, 0) {
+        @Override
+        public boolean isCellEditable(int r, int c) {
+            return false;
+        }
     };
     private final JTable table = new JTable(model);
 
     private final JButton btnNew = new JButton("Nuevo lote…");
     private final JButton btnRefresh = new JButton("Refrescar");
     private final JButton btnCancel = new JButton("Cancelar");
-    private final JButton btnExport = new JButton("Exportar CSV");
+    private final JButton btnExport = new JButton("Exportar CSV...");
+    private final JButton btnImport = new JButton("Importar lote...");
     private final JButton btnClose = new JButton("Cerrar");
 
     public ReceiptBatchWindow(ReceiptBatchController controller) {
@@ -66,11 +69,11 @@ public class ReceiptBatchWindow extends JFrame {
         JPanel southLeft = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JPanel southRight = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-
         southRight.add(btnNew);
         southRight.add(btnRefresh);
         southRight.add(btnCancel);
         southRight.add(btnExport);
+        southRight.add(btnImport);
         southRight.add(btnClose);
 
         south.add(southLeft, BorderLayout.WEST);
@@ -98,20 +101,27 @@ public class ReceiptBatchWindow extends JFrame {
             }
         });
 
+        btnImport.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onImport();
+            }
+        });
+
         btnCancel.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 onCancel();
             }
         });
+
         btnNew.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	CreateReceiptBatchWindow w = new CreateReceiptBatchWindow(controller);
-            	w.setVisible(true);
+                CreateReceiptBatchWindow w = new CreateReceiptBatchWindow(controller);
+                w.setVisible(true);
             }
         });
-
     }
 
     private Integer selectedBatchId() {
@@ -123,16 +133,19 @@ public class ReceiptBatchWindow extends JFrame {
         Integer id = selectedBatchId();
         boolean canExport = false;
         boolean canCancel = false;
+        boolean canImport = false;
 
         if (id != null) {
             String statusStr = String.valueOf(model.getValueAt(table.getSelectedRow(), 3));
             ReceiptBatchStatus status = ReceiptBatchStatus.valueOf(statusStr);
             canExport = (status == ReceiptBatchStatus.GENERATED);
             canCancel = (status == ReceiptBatchStatus.GENERATED);
+            canImport = (status == ReceiptBatchStatus.EXPORTED);
         }
 
         btnExport.setEnabled(canExport);
         btnCancel.setEnabled(canCancel);
+        btnImport.setEnabled(canImport);
     }
 
     private void loadData() {
@@ -141,7 +154,7 @@ public class ReceiptBatchWindow extends JFrame {
             List<ReceiptBatch> list = controller.listBatches();
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             for (ReceiptBatch b : list) {
-                model.addRow(new Object[]{
+                model.addRow(new Object[] {
                         b.getId(),
                         b.getChargeMonth(),
                         b.getBankEntity(),
@@ -171,6 +184,28 @@ public class ReceiptBatchWindow extends JFrame {
         }
     }
 
+    private void onImport() {
+        Integer id = selectedBatchId();
+        if (id == null)return;
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int res = chooser.showOpenDialog(this);
+        if (res != JFileChooser.APPROVE_OPTION) return;
+
+        Path path = chooser.getSelectedFile().toPath();
+
+        try {
+            controller.importReturnedBatch(id, path);
+            loadData();
+            String summary = controller.getLastImportSummary();
+            if (summary == null || summary.trim().isEmpty()) {summary = "Lote importado correctamente.";}
+            JOptionPane.showMessageDialog(this, summary);
+        } catch (ApplicationException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo importar", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void onCancel() {
         Integer id = selectedBatchId();
         if (id == null) return;
@@ -179,8 +214,8 @@ public class ReceiptBatchWindow extends JFrame {
                 this,
                 "¿Cancelar el lote " + id + " y liberar sus recibos?",
                 "Confirmar cancelación",
-                JOptionPane.OK_CANCEL_OPTION
-        );
+                JOptionPane.OK_CANCEL_OPTION);
+
         if (ok != JOptionPane.OK_OPTION) return;
 
         try {

@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+@SuppressWarnings("serial")
 public class AssemblyCreateWindow extends JDialog {
 
     private final AssemblyController controller;
