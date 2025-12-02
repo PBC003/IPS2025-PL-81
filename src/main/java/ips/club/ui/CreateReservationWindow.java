@@ -3,6 +3,8 @@ package ips.club.ui;
 import ips.club.controller.ReservationController;
 import ips.club.model.Location;
 import ips.club.model.Reservation;
+import ips.club.model.WeatherForecast;
+import ips.club.model.WeatherPolicy;
 
 import javax.swing.*;
 
@@ -24,20 +26,22 @@ public class CreateReservationWindow extends JDialog {
     private final ReservationController controller;
     private final int userId;
 
-    private JComboBox<Location> cbLocation = new JComboBox<>();
-    private JXDatePicker dpDay = new JXDatePicker();
-    private JComboBox<LocalTime> cbHour = new JComboBox<>();
-    private JButton btnCreate = new JButton("Reservar");
-    private JButton btnCancel = new JButton("Cancelar");
-    private JLabel lblHint = new JLabel("Elige instalación, día y duración para ver horas libres");
-
-    private JToggleButton btn60 = new JToggleButton("60 minutos");
-    private JToggleButton btn120 = new JToggleButton("120 minutos");
+    private JComboBox<Location> cbLocation;
+    private JXDatePicker dpDay;
+    private JComboBox<LocalTime> cbHour;
+    private JButton btnCreate;
+    private JButton btnCancel;
+    private JLabel lblHint;
+    private JLabel lblForecast;
+    private JToggleButton btn60;
+    private JToggleButton btn120;
+    private ButtonGroup durationGroup;
 
     private final ZoneId zone = ZoneId.systemDefault();
     private LocalDate minDate;
     private LocalDate maxDate;
     private LocalDate lastValidDay;
+    private boolean weatherSuitable = true;
 
     public CreateReservationWindow(ReservationController controller, int userId) {
         super(null, "Nueva reserva", ModalityType.APPLICATION_MODAL);
@@ -45,7 +49,7 @@ public class CreateReservationWindow extends JDialog {
         this.userId = userId;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(560, 280);
+        setSize(560, 320);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(8, 8));
         initUI();
@@ -58,8 +62,13 @@ public class CreateReservationWindow extends JDialog {
         btnCreate = new JButton("Reservar");
         btnCancel = new JButton("Cancelar");
         lblHint = new JLabel("Elige instalación, día y duración para ver horas libres");
+        lblForecast = new JLabel("Previsión: --");
         btn60 = new JToggleButton("60 minutos");
         btn120 = new JToggleButton("120 minutos");
+        durationGroup = new ButtonGroup();
+        durationGroup.add(btn60);
+        durationGroup.add(btn120);
+        btn60.setSelected(true);
 
         JPanel form = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
@@ -80,9 +89,19 @@ public class CreateReservationWindow extends JDialog {
 
         c.gridy++;
         c.gridx = 0;
+        form.add(new JLabel("Previsión:"), c);
+        c.gridx = 1;
+        form.add(lblForecast, c);
+
+        JPanel durationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        durationPanel.add(btn60);
+        durationPanel.add(btn120);
+
+        c.gridy++;
+        c.gridx = 0;
         form.add(new JLabel("Duración:"), c);
         c.gridx = 1;
-        form.add(createMinutesPanel(), c);
+        form.add(durationPanel, c);
 
         c.gridy++;
         c.gridx = 0;
@@ -102,14 +121,16 @@ public class CreateReservationWindow extends JDialog {
 
         loadLocations();
         setupDayPicker();
-        setupMinutesButtons();
-
         cbHour.setEnabled(false);
         btnCreate.setEnabled(false);
+
+        updateForecast();
+        updateAvailableHours();
 
         cbLocation.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                updateForecast();
                 updateAvailableHours();
             }
         });
@@ -124,6 +145,7 @@ public class CreateReservationWindow extends JDialog {
         btn60.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                updateForecast();
                 updateAvailableHours();
             }
         });
@@ -131,6 +153,7 @@ public class CreateReservationWindow extends JDialog {
         btn120.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                updateForecast();
                 updateAvailableHours();
             }
         });
@@ -150,31 +173,11 @@ public class CreateReservationWindow extends JDialog {
         });
     }
 
-    private JPanel createMinutesPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        ButtonGroup group = new ButtonGroup();
-        group.add(btn60);
-        group.add(btn120);
-        panel.add(btn60);
-        panel.add(btn120);
-        return panel;
-    }
-
-    private void setupMinutesButtons() {
-        btn60.setSelected(true);
-    }
-
-    private Integer getSelectedMinutes() {
-        if (btn60.isSelected()) return 60;
-        if (btn120.isSelected()) return 120;
-        return null;
-    }
-
     private void loadLocations() {
         cbLocation.removeAllItems();
-        List<Location> locs = controller.findAllLocations();
-        for (Location l : locs) {
-            cbLocation.addItem(new Location(l.getId(), l.getName()));
+        List<Location> locations = controller.findAllLocations();
+        for (Location l : locations) {
+            cbLocation.addItem(l);
         }
         if (cbLocation.getItemCount() > 0) {
             cbLocation.setSelectedIndex(0);
@@ -195,6 +198,32 @@ public class CreateReservationWindow extends JDialog {
         dpDay.getMonthView().setUpperBound(max);
     }
 
+    private void restoreLastValidDay() {
+        if (lastValidDay == null) {
+            lastValidDay = minDate;
+        }
+        Date d = Date.from(lastValidDay.atStartOfDay(zone).toInstant());
+        dpDay.setDate(d);
+    }
+
+    private LocalDate getSelectedDay() {
+        Date selected = dpDay.getDate();
+        if (selected == null) {
+            return null;
+        }
+        return Instant.ofEpochMilli(selected.getTime()).atZone(zone).toLocalDate();
+    }
+
+    private Integer getSelectedMinutes() {
+        if (btn60.isSelected()) {
+            return 60;
+        }
+        if (btn120.isSelected()) {
+            return 120;
+        }
+        return null;
+    }
+
     private void onDayChanged() {
         Date selected = dpDay.getDate();
         if (selected == null) {
@@ -208,31 +237,68 @@ public class CreateReservationWindow extends JDialog {
             return;
         }
         lastValidDay = day;
+        updateForecast();
         updateAvailableHours();
     }
 
-    private void restoreLastValidDay() {
-        if (lastValidDay != null) {
-            Date d = Date.from(lastValidDay.atStartOfDay(zone).toInstant());
-            dpDay.setDate(d);
+    private void updateForecast() {
+        LocalDate day = getSelectedDay();
+        Location location = (Location) cbLocation.getSelectedItem();
+        if (day == null) {
+            lblForecast.setText("Previsión no disponible");
+            lblForecast.setForeground(UIManager.getColor("Label.foreground"));
+            weatherSuitable = true;
+            return;
         }
-    }
-
-    private LocalDate getSelectedDay() {
-        Date d = dpDay.getDate();
-        if (d == null && lastValidDay != null) {return lastValidDay;}
-        if (d == null) {return null;}
-        return Instant.ofEpochMilli(d.getTime()).atZone(zone).toLocalDate();
+        try {
+            WeatherForecast forecast = controller.getDailyForecast(day);
+            if (forecast == null) {
+                lblForecast.setText("Previsión no disponible");
+                lblForecast.setForeground(UIManager.getColor("Label.foreground"));
+                weatherSuitable = true;
+                return;
+            }
+            if (location != null && !location.isOutdoor()) {
+                weatherSuitable = true;
+                String text = String.format(
+                        "Min %.1f ºC, max %.1f ºC, precipitación %.1f mm (instalación interior)",
+                        forecast.getMinTemperatureCelsius(),
+                        forecast.getMaxTemperatureCelsius(),
+                        forecast.getPrecipitationMm());
+                lblForecast.setForeground(UIManager.getColor("Label.foreground"));
+                lblForecast.setText(text);
+            } else {
+                weatherSuitable = WeatherPolicy.isSuitableForLocation(location, forecast);
+                String text = String.format(
+                        "Min %.1f ºC, max %.1f ºC, precipitación %.1f mm",
+                        forecast.getMinTemperatureCelsius(),
+                        forecast.getMaxTemperatureCelsius(),
+                        forecast.getPrecipitationMm());
+                if (weatherSuitable) {
+                    lblForecast.setForeground(UIManager.getColor("Label.foreground"));
+                    lblForecast.setText(text + " (condiciones adecuadas)");
+                } else {
+                    lblForecast.setForeground(Color.RED);
+                    lblForecast.setText(text + " (condiciones no adecuadas)");
+                }
+            }
+        } catch (Exception ex) {
+            lblForecast.setText("Previsión no disponible");
+            lblForecast.setForeground(UIManager.getColor("Label.foreground"));
+            weatherSuitable = true;
+        }
     }
 
     private void updateAvailableHours() {
         Location li = (Location) cbLocation.getSelectedItem();
         Integer minutes = getSelectedMinutes();
         LocalDate day = getSelectedDay();
+
         if (li == null || minutes == null || day == null) {
             cbHour.removeAllItems();
             cbHour.setEnabled(false);
             btnCreate.setEnabled(false);
+            lblHint.setText("Elige instalación, día y duración para ver horas libres");
             return;
         }
 
@@ -245,7 +311,14 @@ public class CreateReservationWindow extends JDialog {
 
         boolean has = cbHour.getItemCount() > 0;
         cbHour.setEnabled(has);
-        btnCreate.setEnabled(has);
+        btnCreate.setEnabled(has && weatherSuitable);
+        if (!has) {
+            lblHint.setText("No hay horas disponibles con esos datos.");
+        } else if (!weatherSuitable && li.isOutdoor()) {
+            lblHint.setText("Las condiciones meteorológicas no son óptimas.");
+        } else {
+            lblHint.setText("Selecciona la hora y pulsa Reservar.");
+        }
     }
 
     private void onCreate(ActionEvent e) {
@@ -261,6 +334,11 @@ public class CreateReservationWindow extends JDialog {
         LocalDate day = getSelectedDay();
         if (day == null) {
             JOptionPane.showMessageDialog(this, "La fecha seleccionada no es válida.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!weatherSuitable && li.isOutdoor()) {
+            JOptionPane.showMessageDialog(this, "No se pueden realizar reservas por las condiciones meteorológicas.", "No disponible", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
