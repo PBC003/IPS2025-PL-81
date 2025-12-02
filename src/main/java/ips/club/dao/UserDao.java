@@ -16,6 +16,7 @@ public class UserDao {
     private static final String SQL_FIND_ALL_WITHOUT_RECEIPT_FOR = "SELECT u.id, u.name, u.surname, u.email, u.iban, u.monthly_fee_cents, u.role " +
             "FROM Users u " +
             "LEFT JOIN Receipt r ON r.user_id = u.id AND r.charge_month = ? " +
+            "AND r.status IN ('GENERATED','PAID') " +
             "WHERE r.id IS NULL " +
             "ORDER BY u.surname, u.name";
 

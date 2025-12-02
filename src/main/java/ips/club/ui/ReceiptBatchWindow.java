@@ -6,6 +6,8 @@ import ips.club.model.ReceiptBatchStatus;
 import ips.util.ApplicationException;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -62,7 +64,6 @@ public class ReceiptBatchWindow extends JFrame {
         root.add(north, BorderLayout.NORTH);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getSelectionModel().addListSelectionListener(e -> updateButtons());
         root.add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel south = new JPanel(new BorderLayout());
@@ -79,6 +80,12 @@ public class ReceiptBatchWindow extends JFrame {
         south.add(southLeft, BorderLayout.WEST);
         south.add(southRight, BorderLayout.EAST);
         root.add(south, BorderLayout.SOUTH);
+
+        table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                updateButtons();
+            }
+        });
 
         btnRefresh.addActionListener(new ActionListener() {
             @Override
