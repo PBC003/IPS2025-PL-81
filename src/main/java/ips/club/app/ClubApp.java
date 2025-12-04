@@ -10,7 +10,6 @@ import ips.club.controller.UsersController;
 import ips.club.model.User;
 import ips.club.ui.LoginWindow;
 import ips.club.ui.MenuWindow;
-import ips.util.Database;
 
 import javax.swing.*;
 
@@ -30,10 +29,6 @@ public class ClubApp {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-
-                Database db = new Database();
-                db.createDatabase(false);
-                db.loadDatabase();
 
                 IncidentsController incController = new IncidentsController();
                 UsersController usersController = new UsersController();

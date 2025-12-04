@@ -49,10 +49,6 @@ public class ReceiptExportService {
         if (items.isEmpty())
             throw new ApplicationException("El lote " + batchId + " no tiene recibos.");
 
-        System.out.println("Export dir exists? " + Files.exists(csvPath.getParent()));
-        System.out.println("Is dir? " + Files.isDirectory(csvPath.getParent()));
-        System.out.println("Target exists? " + Files.exists(csvPath));
-
         try (BufferedWriter w = Files.newBufferedWriter(csvPath, StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             w.write("receipt_number,member_name,member_surname,member_iban,amount_cents,value_date,issue_date,charge_month,concept");
