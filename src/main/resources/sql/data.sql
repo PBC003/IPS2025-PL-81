@@ -31,16 +31,21 @@ INSERT INTO Incident_type (name) VALUES
   ('Otros');
 
 -- LOCATION
-INSERT INTO Location (name) VALUES
-  ('Gym'),
-  ('Piscina'),
-  ('Pilates'),
-  ('Vestuario Masculino'),
-  ('Vestuario Femenino'),
-  ('SPA'),
-  ('Sala de Spinning'),
-  ('Recepción'),
-  ('Parking');
+INSERT INTO Location (name, outdoor) VALUES
+  ('Gym', FALSE),
+  ('Piscina', TRUE),
+  ('Pilates', FALSE),
+  ('Vestuario Masculino', FALSE),
+  ('Vestuario Femenino', FALSE),
+  ('SPA', FALSE),
+  ('Sala de Spinning', FALSE),
+  ('Recepción', FALSE),
+  ('Parking', FALSE),
+  ('pista de tenis', TRUE),
+  ('pista de pádel', TRUE),
+  ('campo de fútbol', TRUE),
+  ('cancha de baloncesto', TRUE);
+
 
 -- INCIDENT
 INSERT INTO Incident (user_id, inc_code, description, created_at, status, location_id) VALUES

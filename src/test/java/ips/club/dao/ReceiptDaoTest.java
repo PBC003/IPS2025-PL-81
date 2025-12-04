@@ -50,8 +50,7 @@ public class ReceiptDaoTest extends DatabaseTest {
                 "202511",
                 "Cuota test",
                 ReceiptStatus.GENERATED,
-                null
-        );
+                null);
         Receipt inserted = dao.insert(toInsert);
         assertNotNull(inserted.getId());
         assertNotNull(inserted.getReceiptNumber());
@@ -82,6 +81,14 @@ public class ReceiptDaoTest extends DatabaseTest {
         db.loadDatabase();
         List<Receipt> rs = new ReceiptDao().findUnbatchedAll();
         assertNotNull(rs);
-        assertTrue(rs.stream().allMatch(r -> r.getBatchId() == null || r.getBatchId() == 0));
+        boolean allMatch = true;
+        for (Receipt r : rs) {
+            if (r.getBatchId() != null && r.getBatchId() != 0) {
+                allMatch = false;
+                break;
+            }
+        }
+
+        assertTrue(allMatch);
     }
 }

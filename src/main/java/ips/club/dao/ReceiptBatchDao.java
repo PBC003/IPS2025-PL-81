@@ -2,7 +2,6 @@ package ips.club.dao;
 
 import ips.club.model.ReceiptBatch;
 import ips.club.model.ReceiptBatchStatus;
-import ips.club.model.ReceiptStatus;
 import ips.util.ApplicationException;
 import ips.util.Database;
 
@@ -34,31 +33,28 @@ public class ReceiptBatchDao {
 
     private final String SQL_UPDATE_BATCH = "UPDATE Receipt_batch SET status = ?, file_name = ?, total_amount = ?, receipts_cnt = ? WHERE id = ?";
 
-    private final String SQL_UPDATE_RECEIPTS = "UPDATE Receipt SET status = ? WHERE batch_id = ?";
-
     private static final String SQL_RECALC_TOTALS = "UPDATE Receipt_batch " +
             "SET receipts_cnt = (SELECT COUNT(*) FROM Receipt r WHERE r.batch_id = ?), " +
-            "    total_amount = (SELECT COALESCE(SUM(r.amount_cents),0) FROM Receipt r WHERE r.batch_id = ?) " +
+            "total_amount = (SELECT COALESCE(SUM(r.amount_cents),0) FROM Receipt r WHERE r.batch_id = ?) " +
             "WHERE id = ?";
 
     public ReceiptBatch insert(ReceiptBatch b) {
         Database db = new Database();
-        try (Connection conn = db.getConnection();
-                PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = db.getConnection()){
+            PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
             ps.setString(1, b.getChargeMonth());
             ps.setString(2, b.getBankEntity());
             ps.setString(3, (b.getCreatedAt() != null ? b.getCreatedAt() : LocalDateTime.now()).toString());
             ps.setString(4, (b.getStatus() != null ? b.getStatus() : ReceiptBatchStatus.GENERATED).name());
-            ps.setString(5,
-                    (b.getFileName() != null ? b.getFileName() : "Lote Generado - " + LocalDateTime.now().toString()));
+            ps.setString(5, (b.getFileName() != null ? b.getFileName() : "Lote Generado - " + LocalDateTime.now().toString()));
 
-            if (ps.executeUpdate() != 1)
-                throw new ApplicationException("No se insertó el lote.");
+            if (ps.executeUpdate() != 1) throw new ApplicationException("No se insertó el lote.");
+
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next())
-                    b.setId(rs.getInt(1));
+                if (rs.next()) b.setId(rs.getInt(1));
             }
+
             return b;
         } catch (SQLException e) {
             throw new ApplicationException("Error al insertar lote");
@@ -67,14 +63,15 @@ public class ReceiptBatchDao {
 
     public ReceiptBatch findById(int id) {
         Database db = new Database();
-        try (Connection conn = db.getConnection();
-                PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ID)) {
+        try (Connection conn = db.getConnection()){
+            PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ID);
             ps.setInt(1, id);
+
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next())
-                    return null;
+                if (!rs.next())return null;
                 return map(rs);
             }
+
         } catch (SQLException e) {
             throw new ApplicationException("Error al buscar lote");
         }
@@ -82,12 +79,15 @@ public class ReceiptBatchDao {
 
     public List<ReceiptBatch> findAll() {
         Database db = new Database();
-        try (Connection c = db.getConnection();
-                PreparedStatement ps = c.prepareStatement(SQL_FIND_ALL);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = db.getConnection()){
+            PreparedStatement ps = c.prepareStatement(SQL_FIND_ALL);
+            ResultSet rs = ps.executeQuery();
             ArrayList<ReceiptBatch> out = new ArrayList<>();
-            while (rs.next())
+
+            while (rs.next()){
                 out.add(map(rs));
+            }
+
             return out;
         } catch (SQLException e) {
             throw new ApplicationException("Error listando lotes");
@@ -99,7 +99,9 @@ public class ReceiptBatchDao {
         try (Connection conn = db.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                int total = 0, cnt = 0;
+                int total = 0;
+                int cnt = 0;
+
                 try (PreparedStatement ps = conn.prepareStatement(SQL_SUM_COUNT)) {
                     ps.setInt(1, batchId);
                     try (ResultSet rs = ps.executeQuery()) {
@@ -121,18 +123,7 @@ public class ReceiptBatchDao {
                     }
                 }
 
-                try (PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_RECEIPTS)) {
-                    ps.setString(1, ReceiptStatus.PAID.name());
-                    ps.setInt(2, batchId);
-                    ps.executeUpdate();
-                }
-
                 conn.commit();
-            } catch (Exception ex) {
-                conn.rollback();
-                if (ex instanceof ApplicationException)
-                    throw (ApplicationException) ex;
-                throw new ApplicationException("Error al marcar exportado el lote " + batchId);
             } finally {
                 conn.setAutoCommit(true);
             }
@@ -143,13 +134,12 @@ public class ReceiptBatchDao {
 
     public void markExported(int batchId, String fileName) {
         Database db = new Database();
-        try (Connection conn = db.getConnection();
-                PreparedStatement ps = conn.prepareStatement(SQL_MARK_EXPORTED)) {
+        try (Connection conn = db.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(SQL_MARK_EXPORTED);
             ps.setString(1, ReceiptBatchStatus.EXPORTED.name());
             ps.setString(2, fileName);
             ps.setInt(3, batchId);
-            if (ps.executeUpdate() != 1)
-                throw new ApplicationException("No se marcó exportado el lote " + batchId);
+            if (ps.executeUpdate() != 1)throw new ApplicationException("No se marcó exportado el lote " + batchId);
         } catch (SQLException e) {
             throw new ApplicationException("Error al marcar lote exportado");
         }
@@ -157,11 +147,10 @@ public class ReceiptBatchDao {
 
     public void markCanceled(int batchId) {
         Database db = new Database();
-        try (Connection c = db.getConnection();
-                PreparedStatement ps = c.prepareStatement(SQL_MARK_CANCELED)) {
+        try (Connection c = db.getConnection()){
+            PreparedStatement ps = c.prepareStatement(SQL_MARK_CANCELED);
             ps.setInt(1, batchId);
-            if (ps.executeUpdate() != 1)
-                throw new ApplicationException("No se pudo cancelar (¿no está en estado GENERATED?)");
+            if (ps.executeUpdate() != 1) throw new ApplicationException("No se pudo cancelar (¿no está en estado GENERATED?)");
         } catch (SQLException e) {
             throw new ApplicationException("Error al cancelar lote " + batchId);
         }
@@ -169,9 +158,8 @@ public class ReceiptBatchDao {
 
     public void recalcTotals(int batchId) throws ApplicationException {
         Database db = new Database();
-        try (Connection c = db.getConnection();
-                PreparedStatement ps = c.prepareStatement(SQL_RECALC_TOTALS)) {
-
+        try (Connection c = db.getConnection()) {
+            PreparedStatement ps = c.prepareStatement(SQL_RECALC_TOTALS);
             ps.setInt(1, batchId);
             ps.setInt(2, batchId);
             ps.setInt(3, batchId);
@@ -179,6 +167,20 @@ public class ReceiptBatchDao {
 
         } catch (SQLException e) {
             throw new ApplicationException("Error recalculando totales del lote: " + e.getMessage());
+        }
+    }
+
+    public void markProcessed(int batchId) {
+        Database db = new Database();
+        try (Connection conn = db.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("UPDATE Receipt_batch SET status = ? WHERE id = ?");
+            ps.setString(1, ReceiptBatchStatus.PROCESSED.name());
+            ps.setInt(2, batchId);
+            if (ps.executeUpdate() != 1) {
+                throw new ApplicationException("No se pudo marcar como procesado el lote " + batchId);
+            }
+        } catch (SQLException e) {
+            throw new ApplicationException("Error marcando como procesado el lote " + batchId + ": " + e.getMessage());
         }
     }
 

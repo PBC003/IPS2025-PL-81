@@ -8,6 +8,8 @@ import ips.club.model.User;
 import ips.util.ApplicationException;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 @SuppressWarnings("serial")
@@ -42,8 +44,19 @@ public class CreateReceiptWindow extends JDialog {
         btnCrear = new JButton("Crear");
         btnCancelar = new JButton("Cancelar");
 
-        btnCrear.addActionListener(e -> onCrear());
-        btnCancelar.addActionListener(e -> onCancelar());
+       btnCrear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                    onCrear();
+                }
+        });
+
+        btnCancelar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onCancelar();
+            }
+        });
 
         JPanel form = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
